@@ -1,0 +1,46 @@
+body {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.glow-border {
+  border: 1px solid rgb(34 211 238 / 0.4);
+  box-shadow: 0 0 8px rgb(34 211 238 / 0.15);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.glow-border:hover:not(:disabled) {
+  border-color: rgb(34 211 238 / 0.8);
+  box-shadow: 0 0 12px rgb(34 211 238 / 0.35);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tab-btn {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: rgb(161 161 170);
+}
+.tab-btn.active {
+  color: rgb(34 211 238);
+  border-color: rgb(39 39 42);
+  background: rgb(24 24 27);
+}
+
+.buy-mode-btn { padding: 0.2rem 0.6rem; border: 1px solid rgb(63 63 70); }
+.buy-mode-btn.active { border-color: rgb(34 211 238); color: rgb(34 211 238); }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.progress {
+  height: 4px;
+  background: rgb(39 39 42);
+  overflow: hidden;
+}
+.progress > div {
+  height: 100%;
+  background: rgb(34 211 238);
+  transition: width 0.1s linear;
+}

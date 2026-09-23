@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sub-Light</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/break_infinity.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-zinc-950 text-zinc-300 min-h-screen">
+
+  <!-- Header / status bar -->
+  <header class="border-b border-zinc-800 px-4 py-3 flex flex-wrap gap-6 text-sm">
+    <h1 class="text-cyan-400 font-semibold tracking-widest">SUB-LIGHT</h1>
+    <div>Photons: <span id="res-photons">0</span></div>
+    <div>Photons/sec: <span id="res-pps">0</span></div>
+    <div id="res-bytes-wrap" class="hidden">Raw Bytes: <span id="res-bytes">0</span></div>
+    <div id="res-cores-wrap" class="hidden">Pulsar Cores: <span id="res-cores">0</span></div>
+  </header>
+
+  <!-- Tab bar. data-tab must match a section's data-panel. -->
+  <nav id="tabs" class="flex gap-1 px-4 pt-3 border-b border-zinc-800 text-sm">
+    <button class="tab-btn" data-tab="array">Array</button>
+    <button class="tab-btn hidden" data-tab="telemetry">Telemetry</button>
+    <button class="tab-btn" data-tab="spectrometer">Spectrometer</button>
+    <button class="tab-btn hidden" data-tab="calibration">Calibration</button>
+    <button class="tab-btn" data-tab="console">Console</button>
+  </nav>
+
+  <main class="p-4">
+    <!-- 1. Array: manual ping + generators -->
+    <section class="panel" data-panel="array">
+      <button id="btn-ping" class="glow-border px-6 py-4 rounded mb-4">Manual Signal Ping</button>
+      <div id="buy-mode" class="flex gap-2 mb-3 text-xs">
+        <button class="buy-mode-btn" data-mode="1">Buy 1</button>
+        <button class="buy-mode-btn" data-mode="10">Buy 10</button>
+        <button class="buy-mode-btn" data-mode="max">Buy Max</button>
+      </div>
+      <div id="generator-list" class="grid gap-2"></div>
+    </section>
+
+    <!-- 2. Telemetry: TODO processing threads + byte upgrades -->
+    <section class="panel" data-panel="telemetry">
+      <p class="text-zinc-500">Telemetry processing: not yet built.</p>
+    </section>
+
+    <!-- 3. Spectrometer: one-off upgrades -->
+    <section class="panel" data-panel="spectrometer">
+      <div id="upgrade-list" class="grid gap-2 sm:grid-cols-3"></div>
+    </section>
+
+    <!-- 4. Calibration: TODO prestige -->
+    <section class="panel" data-panel="calibration">
+      <p class="text-zinc-500">Calibration: not yet built.</p>
+    </section>
+
+    <!-- 5. Console: settings -->
+    <section class="panel" data-panel="console">
+      <div class="flex flex-wrap gap-2 mb-3">
+        <button id="btn-export" class="glow-border px-3 py-1 rounded">Export Save</button>
+        <button id="btn-import" class="glow-border px-3 py-1 rounded">Import Save</button>
+        <button id="btn-format" class="glow-border px-3 py-1 rounded">Format: <span id="format-label"></span></button>
+        <button id="btn-reset" class="border border-red-800 text-red-400 px-3 py-1 rounded">Hard Reset</button>
+      </div>
+      <textarea id="save-box" class="w-full h-32 bg-zinc-900 border border-zinc-800 p-2 text-xs" placeholder="Save string"></textarea>
+    </section>
+  </main>
+
+  <!-- Load order matters: each file adds to the global SL namespace. -->
+  <script src="js/config.js"></script>
+  <script src="js/format.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
