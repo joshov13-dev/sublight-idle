@@ -47,7 +47,7 @@ function joinList(items) {
 }
 
 const THEMES = {
-  sky: { text: 'text-sky-200', soft: 'text-sky-400', ready: 'border-sky-600 hover:bg-sky-950/60', owned: 'border-sky-900/80 bg-sky-950/40', button: 'border-sky-700 text-sky-100 hover:bg-sky-900/50', chip: 'text-sky-200' },
+  sky: { text: 'text-yellow-200', soft: 'text-yellow-400', ready: 'border-yellow-600 hover:bg-yellow-950/60', owned: 'border-yellow-900/80 bg-yellow-950/40', button: 'border-yellow-700 text-yellow-100 hover:bg-yellow-900/50', chip: 'text-yellow-200' },
   emerald: { text: 'text-emerald-200', soft: 'text-emerald-400', ready: 'border-emerald-600 hover:bg-emerald-950/60', owned: 'border-emerald-900/80 bg-emerald-950/40', button: 'border-emerald-700 text-emerald-100 hover:bg-emerald-900/50', chip: 'text-emerald-200' },
   amber: { text: 'text-amber-200', soft: 'text-amber-400', ready: 'border-amber-600 hover:bg-amber-950/60', owned: 'border-amber-900/80 bg-amber-950/40', button: 'border-amber-700 text-amber-100 hover:bg-amber-900/50', chip: 'text-amber-200' },
   violet: { text: 'text-violet-200', soft: 'text-violet-400', ready: 'border-violet-600 hover:bg-violet-950/60', owned: 'border-violet-900/80 bg-violet-950/40', button: 'border-violet-700 text-violet-100 hover:bg-violet-900/50', chip: 'text-violet-200' },
@@ -55,8 +55,8 @@ const THEMES = {
 
 const BTN = 'press rounded-md border px-3 py-2 text-sm transition disabled:opacity-40 disabled:hover:bg-transparent';
 const SMALL_BTN = 'press rounded border px-2 py-1 text-xs transition disabled:opacity-40 disabled:hover:bg-transparent';
-const PANEL = 'rounded-lg bg-slate-900/70 p-4';
-const HEADING = 'text-base font-bold text-slate-200';
+const PANEL = 'glass rounded-2xl p-5';
+const HEADING = 'font-display text-2xl text-slate-100';
 
 function heading(text) {
   return h('h2', { class: HEADING, text });
@@ -73,7 +73,7 @@ function toggleButton(onClick) {
 function updateToggle(btn, label, on) {
   setText(btn, label ? `${label}: ${on ? 'on' : 'off'}` : (on ? 'On' : 'Off'));
   btn.setAttribute('aria-pressed', String(on));
-  setClass(btn, `${SMALL_BTN} ${on ? 'border-sky-600 text-sky-200' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`);
+  setClass(btn, `${SMALL_BTN} ${on ? 'border-yellow-600 text-yellow-200' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`);
 }
 
 // ---------- Shared widgets ----------
@@ -104,8 +104,8 @@ function upgradeGrid(defs, theme, status, buy, columns = 'sm:grid-cols-2') {
         const stateClass = {
           owned: theme.owned,
           ready: `border-slate-700 ${theme.ready}`,
-          poor: 'border-transparent bg-slate-900/60',
-          locked: 'border-transparent bg-slate-900/40 opacity-50',
+          poor: 'border-transparent glass',
+          locked: 'border-transparent glass opacity-50',
         }[s.state];
         setClass(item.btn, `press text-left rounded-md border p-3 transition ${stateClass}`);
         setDisabled(item.btn, s.state !== 'ready');
@@ -135,7 +135,7 @@ function repeatableRow(id, theme, currency, effectText) {
     },
     text: 'Max',
   });
-  const el = h('div', { class: 'rounded-md bg-slate-900/60 p-3 flex flex-wrap items-center justify-between gap-3' },
+  const el = h('div', { class: 'rounded-md glass p-3 flex flex-wrap items-center justify-between gap-3' },
     h('div', { class: 'min-w-0' },
       h('div', { class: 'text-slate-100 text-sm' }, def.name, ' ', level),
       h('div', { class: 'text-xs text-slate-400 mt-1', text: def.desc }),
@@ -234,7 +234,7 @@ function openModal({ title, body, actions = [{ label: 'Close' }], dismissable = 
   const root = document.getElementById('modal-root');
   const close = () => closeModal();
   const buttons = actions.map(a => h('button', {
-    class: `${BTN} ${a.style === 'danger' ? 'border-rose-700 text-rose-200 hover:bg-rose-950/60' : a.style === 'primary' ? 'border-sky-600 text-sky-100 hover:bg-sky-900/50' : 'border-slate-700 text-slate-300 hover:bg-slate-800'}`,
+    class: `${BTN} ${a.style === 'danger' ? 'border-rose-700 text-rose-200 hover:bg-rose-950/60' : a.style === 'primary' ? 'border-yellow-600 text-yellow-100 hover:bg-yellow-900/50' : 'border-slate-700 text-slate-300 hover:bg-slate-800'}`,
     text: a.label,
     onclick: () => {
       const keepOpen = a.onClick && a.onClick() === false;
@@ -283,10 +283,10 @@ function toast(text, tone = 'plain') {
   const root = document.getElementById('toasts');
   const colours = {
     plain: 'border-slate-700 text-slate-200',
-    log: 'border-sky-800 text-sky-100',
+    log: 'border-yellow-800 text-yellow-100',
     achievement: 'border-amber-700 text-amber-100',
   };
-  const el = h('div', { class: `toast-enter max-w-md rounded-md border bg-slate-900/95 px-4 py-2 text-sm shadow-lg ${colours[tone]}`, text });
+  const el = h('div', { class: `toast-enter max-w-md rounded-md border glass px-4 py-2 text-sm shadow-lg ${colours[tone]}`, text });
   root.append(el);
   while (root.children.length > 4) root.firstChild.remove();
   setTimeout(() => el.remove(), 4000);
@@ -333,7 +333,7 @@ function nextGoal() {
 const headerEls = {};
 
 function buildHeader() {
-  const photons = h('div', { class: 'text-3xl sm:text-4xl text-sky-200 tabular-nums leading-none' });
+  const photons = h('div', { class: 'font-display text-5xl sm:text-6xl text-amber-50 leading-none counter' });
   const pps = h('div', { class: 'text-xs text-slate-400 mt-1' });
   const chip = (label, theme) => {
     const value = h('span', { class: `${THEMES[theme].chip} tabular-nums` });
@@ -348,10 +348,10 @@ function buildHeader() {
   const recalBtn = h('button', { onclick: () => ui.recalibrate() });
   const crossBtn = h('button', { onclick: () => ui.cross() });
   const goalText = h('span', { class: 'text-sm text-slate-100' });
-  const goalFill = h('div', { class: 'h-full bg-sky-400 transition-[width] duration-300' });
+  const goalFill = h('div', { class: 'h-full bg-gradient-to-r from-amber-500 to-amber-200 transition-[width] duration-500' });
   const goal = h('button', { class: 'press w-full text-left', onclick: () => selectTab(nextGoal().tab) },
     h('div', { class: 'max-w-4xl mx-auto px-4 py-2 flex items-center gap-3' },
-      h('span', { class: 'shrink-0 text-sm font-bold text-sky-300', text: 'Goal' }),
+      h('span', { class: 'shrink-0 font-display italic text-lg text-amber-300', text: 'Next' }),
       goalText,
       h('div', { class: 'ml-auto w-24 sm:w-40 h-1.5 rounded bg-slate-800 overflow-hidden shrink-0' }, goalFill)));
   const challenge = h('div', { class: 'border-t border-violet-900/60 bg-violet-950/40 text-xs text-violet-100' });
@@ -363,12 +363,12 @@ function buildHeader() {
   header.append(
     h('div', { class: 'max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-3' },
       h('div', {},
-        h('div', { class: 'text-sm font-bold text-slate-400 mb-1', text: 'Sublight' }),
+        h('div', { class: 'font-display italic text-lg text-amber-200/80 mb-1', text: 'Sublight' }),
         photons, pps),
       h('div', { class: 'flex flex-col items-start sm:items-end gap-1' },
         h('div', { class: 'flex flex-wrap gap-x-4 gap-y-1' }, telemetry.el, calibration.el, shards.el, fragments.el),
         h('div', { class: 'flex flex-wrap gap-2' }, decodeBtn, recalBtn, crossBtn))),
-    h('div', { class: 'bg-sky-950/40' }, goal),
+    h('div', { class: 'border-t border-amber-200/5' }, goal),
     challenge);
   Object.assign(headerEls, { goalText, goalFill, photons, pps, telemetry, calibration, shards, fragments, decodeBtn, recalBtn, crossBtn, challenge, challengeText });
 }
@@ -431,7 +431,10 @@ const panels = {};
 
 function buildTabs() {
   const nav = document.getElementById('tabs');
-  const row = h('div', { class: 'tabs-scroll max-w-4xl mx-auto px-2 flex overflow-x-auto', role: 'tablist' });
+  const row = h('div', { class: 'dock tabs-scroll relative mx-auto w-max max-w-full flex overflow-x-auto rounded-full p-1', role: 'tablist' });
+  const indicator = h('div', { class: 'dock-indicator', 'aria-hidden': 'true' });
+  row.append(indicator);
+  tabEls.indicator = indicator;
   for (const tab of TABS) {
     const btn = h('button', {
       role: 'tab',
@@ -458,7 +461,12 @@ function updateTabs() {
     const unlocked = tab.unlocked();
     setText(btn, !unlocked ? `${tab.label} (locked)` : tab.id === 'signal' && state.signal.queued ? `Signal (${state.signal.queued})` : tab.label);
     btn.setAttribute('aria-selected', String(active));
-    setClass(btn, `shrink-0 px-3 py-3 text-sm border-b-2 transition ${active ? 'border-sky-400 text-sky-100' : 'border-transparent hover:text-slate-200'} ${unlocked ? (active ? '' : 'text-slate-400') : 'text-slate-600'}`);
+    setClass(btn, `relative z-[1] shrink-0 rounded-full px-4 py-2 text-sm transition-colors ${active ? 'text-slate-950 font-bold' : unlocked ? 'text-slate-300 hover:text-white' : 'text-slate-600'}`);
+    if (active) {
+      const ind = tabEls.indicator;
+      ind.style.width = `${btn.offsetWidth}px`;
+      ind.style.transform = `translateX(${btn.offsetLeft - 4}px)`;
+    }
   }
 }
 
@@ -466,11 +474,14 @@ function updateTabs() {
 
 function buildArraysTab() {
   const intro = h('p', { class: 'text-sm text-slate-400' });
+  const orreryCanvas = h('canvas', { class: 'absolute inset-0 w-full h-full', 'aria-hidden': 'true' });
   const gatherBtn = h('button', {
-    class: `${BTN} ${THEMES.sky.button} px-6 py-3`,
-    text: 'Gather photons',
-    onclick: () => { gather(); burstFrom(gatherBtn, [125, 211, 252], 10); refresh(); },
+    class: 'core-hit absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full',
+    'aria-label': 'Gather photons',
+    title: 'Click the core to gather photons',
+    onclick: () => { gather(); orreryPulse(); burstFrom(gatherBtn, [253, 230, 138], 12); refresh(); },
   });
+  mountOrrery(orreryCanvas);
   const gatherInfo = h('div', { class: 'text-xs text-slate-400' });
 
   const modeBtns = ['1', '10', 'max'].map(mode => h('button', {
@@ -484,7 +495,7 @@ function buildArraysTab() {
 
   const rows = ARRAYS.map(gen => {
     const owned = h('span', { class: 'text-slate-500 text-sm tabular-nums' });
-    const rate = h('div', { class: 'text-xs text-sky-400/90 mt-1' });
+    const rate = h('div', { class: 'text-xs text-yellow-400/90 mt-1' });
     const note = h('div', { class: 'text-xs text-slate-500 mt-1' });
     const amount = h('div', { class: 'text-xs text-slate-500' });
     const cost = h('div', { class: 'text-sm tabular-nums' });
@@ -515,7 +526,8 @@ function buildArraysTab() {
 
   const el = h('div', { class: 'space-y-8' },
     intro,
-    h('div', { class: 'flex flex-col items-center gap-2' }, gatherBtn, gatherInfo),
+    h('div', { class: 'stage relative -mx-4 sm:mx-0 h-72 sm:h-80' }, orreryCanvas, gatherBtn,
+      h('div', { class: 'absolute bottom-3 inset-x-0 text-center' }, gatherInfo)),
     section(null,
       h('div', { class: 'flex flex-wrap items-center justify-between gap-2' },
         heading('Arrays'),
@@ -530,11 +542,11 @@ function buildArraysTab() {
       const step = milestoneStep();
       setText(intro, `Buy arrays. They make photons for you. Every ${step} of one doubles${milestoneBase() === 3 ? ' (triples)' : ''} its output.`);
       const gain = gatherAmount(prod.total);
-      setText(gatherInfo, `+${format(gain)} photons per click${hasTelemetry('echo') ? ', and 4 automatic clicks a second' : ''} (key G)`);
+      setText(gatherInfo, `Click the core: +${format(gain)} photons${hasTelemetry('echo') ? ', and 4 automatic clicks a second' : ''} (key G)`);
 
       modeBtns.forEach((btn, i) => {
         const active = state.buyMode === ['1', '10', 'max'][i];
-        setClass(btn, `${SMALL_BTN} ${active ? 'border-sky-500 text-sky-100' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`);
+        setClass(btn, `${SMALL_BTN} ${active ? 'border-yellow-500 text-yellow-100' : 'border-slate-700 text-slate-400 hover:border-slate-500'}`);
       });
       const autos = autobuyersUnlocked();
       show(autoRow, autos);
@@ -567,15 +579,15 @@ function buildArraysTab() {
         setText(r.note, `Next x${milestoneBase()} boost at ${formatInt(next)} owned${tuned}.`);
         setText(r.amount, `buy ${formatInt(amount)}`);
         setText(r.cost, format(cost));
-        setClass(r.cost, `text-sm tabular-nums ${affordable ? 'text-sky-200' : 'text-slate-600'}`);
+        setClass(r.cost, `text-sm tabular-nums ${affordable ? 'text-yellow-200' : 'text-slate-600'}`);
         setDisabled(r.buyBtn, !affordable);
-        setClass(r.row, `rounded-md border flex transition ${affordable ? 'border-sky-800 bg-slate-900/70 hover:border-sky-500' : 'border-transparent bg-slate-900/50'}`);
+        setClass(r.row, `rounded-md border flex transition ${affordable ? 'border-yellow-800 glass hover:border-yellow-500' : 'border-transparent glass'}`);
         show(r.autoBtn, autos);
         if (autos) {
           const on = state.automation.arrayToggles[g.id];
           setText(r.autoBtn, on ? 'auto on' : 'auto off');
           r.autoBtn.setAttribute('aria-label', `${g.name} autobuyer ${on ? 'on' : 'off'}`);
-          setClass(r.autoBtn, `shrink-0 w-14 border-l border-slate-800 text-xs ${on ? 'text-sky-300' : 'text-slate-600'}`);
+          setClass(r.autoBtn, `shrink-0 w-14 border-l border-slate-800 text-xs ${on ? 'text-yellow-300' : 'text-slate-600'}`);
         }
       });
 
@@ -708,7 +720,7 @@ function buildCalibrationTab() {
       text: label,
       onclick: () => { if (tune(gen.id, amount())) refresh(); },
     }));
-    const row = h('div', { class: 'rounded-md bg-slate-900/60 p-3 flex flex-wrap items-center justify-between gap-2' },
+    const row = h('div', { class: 'rounded-md glass p-3 flex flex-wrap items-center justify-between gap-2' },
       h('div', { class: 'min-w-0' }, h('div', { class: 'text-sm text-slate-100' }, gen.name, ' ', points), mult),
       h('div', { class: 'flex gap-1' }, btns));
     return { gen, row, points, mult, btns };
@@ -875,7 +887,7 @@ function buildHorizonTab() {
       for (const r of challengeRows) {
         const done = challengeDone(r.c.id);
         const active = inChallenge(r.c.id);
-        setClass(r.row, `rounded-md border p-3 space-y-2 ${active ? 'border-violet-500 bg-violet-950/40' : done ? THEMES.violet.owned : 'border-transparent bg-slate-900/60'}`);
+        setClass(r.row, `rounded-md border p-3 space-y-2 ${active ? 'border-violet-500 bg-violet-950/40' : done ? THEMES.violet.owned : 'border-transparent glass'}`);
         setText(r.status, active ? 'In progress.' : done ? 'Completed. Reward active.' : 'Not completed.');
         setClass(r.status, `text-xs ${done || active ? 'text-violet-300' : 'text-slate-500'}`);
         const canStart = state.stats.crossings > 0 && !state.challenge;
@@ -1027,7 +1039,7 @@ function buildSignalTab() {
         setText(card.btn, done ? 'Complete. Reward active.' : `Light a star: ${amountOf(cost, 'fragment')}`);
         setClass(card.btn, `${SMALL_BTN} w-full ${can ? 'border-amber-600 text-amber-100 hover:bg-amber-900/40' : 'border-slate-800 text-slate-500'}`);
         setDisabled(card.btn, !can);
-        setClass(card.el, `rounded-md border p-3 space-y-2 ${done ? 'border-amber-700/80 bg-amber-950/30' : 'border-transparent bg-slate-900/60'}`);
+        setClass(card.el, `rounded-md border p-3 space-y-2 ${done ? 'border-amber-700/80 bg-amber-950/30' : 'border-transparent glass'}`);
         drawChart(card);
       }
 
@@ -1088,7 +1100,7 @@ function buildAchievementsTab() {
       setText(summary, `${n} of ${ACHIEVEMENTS.length} unlocked. Each one boosts all arrays by 3%, compounding: x${format(achievementMultiplier())} right now.`);
       for (const { a, tile } of tiles) {
         const got = state.achievements.includes(a.id);
-        setClass(tile, `h-16 rounded-md border p-1 text-[10px] leading-tight text-center transition ${got ? 'border-amber-700/80 bg-amber-950/40 text-amber-100' : 'border-transparent bg-slate-900/60 text-slate-500 hover:border-slate-600'}`);
+        setClass(tile, `h-16 rounded-md border p-1 text-[10px] leading-tight text-center transition ${got ? 'border-amber-700/80 bg-amber-950/40 text-amber-100' : 'border-transparent glass text-slate-500 hover:border-slate-600'}`);
       }
     },
   };
@@ -1210,7 +1222,7 @@ function buildSettingsTab() {
       h('div', { class: 'flex flex-wrap gap-2' }, confirms.map(c => c.btn))),
     section('Keyboard',
       h('dl', { class: 'grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm' },
-        keys.flatMap(([k, v]) => [h('dt', { class: 'text-sky-300 tabular-nums', text: k }), h('dd', { class: 'text-slate-400', text: v })]))),
+        keys.flatMap(([k, v]) => [h('dt', { class: 'text-yellow-300 tabular-nums', text: k }), h('dd', { class: 'text-slate-400', text: v })]))),
     section('About',
       h('p', { class: 'text-xs text-slate-500 leading-relaxed', text: 'Your save lives in this browser. Export it now and then so you have a backup.' })));
   return {

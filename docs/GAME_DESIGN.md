@@ -173,6 +173,10 @@ A mystery story told through a tuning minigame. Universal Paperclips and A Dark 
 
 ## Visuals
 
+- The orrery sits at the top of the Arrays tab. Your photon core is a glowing star you click to gather, and every array you own orbits it as planets, one coloured ring per array type, with more bodies as you buy more. Unowned orbits show as faint dashed rings.
+- Panels are frosted glass over the moving sky, with a fine film grain over the whole page. The sky shifts slightly with the mouse for depth.
+- Headings and the photon counter use Instrument Serif. Tabs sit in a floating dock with a sliding gold indicator, and buttons catch a band of light on hover.
+
 - An animated starfield sits behind the whole game. It drifts faster as production grows, turns to warp streaks during a Surge, and takes on the colour of your highest layer.
 - Particle bursts on gathering, locking a signal, lighting stars and catching comets.
 - Motion is switched off for players who ask their system to reduce motion.

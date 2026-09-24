@@ -11,7 +11,7 @@ body {
 button:not(:disabled) { cursor: pointer; }
 button:disabled { cursor: default; }
 button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
-  outline: 2px solid #38bdf8;
+  outline: 2px solid #fbbf24;
   outline-offset: 2px;
 }
 
@@ -39,7 +39,6 @@ button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-
   pointer-events: none;
 }
 #tabs, #main { position: relative; z-index: 1; }
-#tabs { background: rgba(2, 6, 23, 0.75); }
 
 .comet {
   position: fixed;
@@ -70,3 +69,75 @@ button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-
 .transmission {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
+
+/* ---------- Type ---------- */
+.font-display { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; letter-spacing: -0.01em; }
+.counter { font-variant-numeric: lining-nums; text-shadow: 0 1px 0 rgba(120, 53, 15, 0.4); }
+
+/* ---------- Surfaces ----------
+   Glass tinted by what sits behind it: a blur of the moving starfield, a
+   self-coloured edge and a bright lip along the top where the light lands. */
+.glass {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.42), rgba(15, 23, 42, 0.52));
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 0 1px rgba(148, 163, 184, 0.06),
+    0 18px 40px -24px rgba(2, 6, 23, 0.9);
+}
+.glass-bar {
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.82), rgba(2, 6, 23, 0.6));
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 -1px 0 rgba(251, 191, 36, 0.08);
+}
+
+/* Film grain over everything, felt more than seen. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- Tab dock ---------- */
+.dock {
+  background: rgba(15, 23, 42, 0.55);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 1px rgba(148, 163, 184, 0.08);
+}
+.dock-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: 0;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #fef3c7, #fbbf24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 14px -4px rgba(251, 191, 36, 0.55);
+  transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.5, 1), width 0.45s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+/* ---------- Buttons: a narrow band of light sweeps across on hover ---------- */
+.press { position: relative; overflow: hidden; isolation: isolate; }
+.press::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.09) 48%, rgba(255, 255, 255, 0.02) 55%, transparent 65%);
+  transform: translateX(-120%);
+  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.press:hover:not(:disabled)::before { transform: translateX(120%); }
+
+/* ---------- Orrery stage ---------- */
+.stage { mask-image: radial-gradient(ellipse 75% 85% at 50% 50%, #000 60%, transparent 100%); }
+.core-hit { cursor: pointer; background: transparent; }
+.core-hit:focus-visible { outline-offset: 6px; border-radius: 9999px; }

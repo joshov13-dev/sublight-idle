@@ -161,7 +161,7 @@ function frame() {
 }
 
 const KEY_ACTIONS = {
-  g: () => gather(),
+  g: () => { gather(); orreryPulse(); },
   m: () => buyAllArrays(),
   d: () => ui.decode(),
   r: () => ui.recalibrate(),
