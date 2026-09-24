@@ -70,12 +70,6 @@ function drawSky(now) {
   const [r, g, b] = currentTint();
   ctx.clearRect(0, 0, width, height);
 
-  const glow = ctx.createRadialGradient(width * 0.8, height * 0.1, 0, width * 0.8, height * 0.1, Math.max(width, height) * 0.8);
-  glow.addColorStop(0, `rgba(${r},${g},${b},0.10)`);
-  glow.addColorStop(1, 'rgba(2,6,23,0)');
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, width, height);
-
   const speed = sky.reduced ? 0 : warpSpeed();
   const streak = Math.min(40, speed / 6);
   for (const s of sky.stars) {

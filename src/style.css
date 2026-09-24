@@ -1,11 +1,12 @@
 [hidden] { display: none !important; }
 
 body {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'Atkinson Hyperlegible', system-ui, sans-serif;
 }
 
-.glow-sky { text-shadow: 0 0 14px rgba(125, 211, 252, 0.55); }
-.glow-violet { text-shadow: 0 0 14px rgba(196, 181, 253, 0.55); }
+/* Mono only for numbers, where columns of digits should line up. */
+.tabular-nums { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
 
 button:not(:disabled) { cursor: pointer; }
 button:disabled { cursor: default; }
@@ -68,5 +69,4 @@ button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-
 
 .transmission {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  text-shadow: 0 0 10px rgba(52, 211, 153, 0.45);
 }

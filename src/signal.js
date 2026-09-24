@@ -33,7 +33,7 @@ const TRANSMISSIONS = [
   { gate: 'calibration', text: 'Each time we cross, we forget. Each time, we leave a signal.' },
   { gate: 'calibration', text: 'These transmissions are mine. From the next time around.' },
   { gate: 'calibration', text: 'I have been doing this for longer than the universe is old.' },
-  { gate: 'horizon', text: 'The horizon is not a wall. It is a mirror.' },
+  { gate: 'horizon', text: 'The horizon is a mirror.' },
   { gate: 'horizon', text: 'Every crossing is a reflection. Every reflection remembers a little more.' },
   { gate: 'horizon', text: 'Break it, and the loop breaks with it.' },
   { gate: 'horizon', text: 'Light cannot outrun itself. But we can try.' },

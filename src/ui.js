@@ -55,8 +55,8 @@ const THEMES = {
 
 const BTN = 'press rounded-md border px-3 py-2 text-sm transition disabled:opacity-40 disabled:hover:bg-transparent';
 const SMALL_BTN = 'press rounded border px-2 py-1 text-xs transition disabled:opacity-40 disabled:hover:bg-transparent';
-const PANEL = 'rounded-lg border border-slate-800 bg-slate-900/40 p-4';
-const HEADING = 'text-xs uppercase tracking-widest text-slate-500';
+const PANEL = 'rounded-lg bg-slate-900/70 p-4';
+const HEADING = 'text-base font-bold text-slate-200';
 
 function heading(text) {
   return h('h2', { class: HEADING, text });
@@ -104,8 +104,8 @@ function upgradeGrid(defs, theme, status, buy, columns = 'sm:grid-cols-2') {
         const stateClass = {
           owned: theme.owned,
           ready: `border-slate-700 ${theme.ready}`,
-          poor: 'border-slate-800',
-          locked: 'border-slate-800 opacity-50',
+          poor: 'border-transparent bg-slate-900/60',
+          locked: 'border-transparent bg-slate-900/40 opacity-50',
         }[s.state];
         setClass(item.btn, `press text-left rounded-md border p-3 transition ${stateClass}`);
         setDisabled(item.btn, s.state !== 'ready');
@@ -135,7 +135,7 @@ function repeatableRow(id, theme, currency, effectText) {
     },
     text: 'Max',
   });
-  const el = h('div', { class: 'rounded-md border border-slate-800 p-3 flex flex-wrap items-center justify-between gap-3' },
+  const el = h('div', { class: 'rounded-md bg-slate-900/60 p-3 flex flex-wrap items-center justify-between gap-3' },
     h('div', { class: 'min-w-0' },
       h('div', { class: 'text-slate-100 text-sm' }, def.name, ' ', level),
       h('div', { class: 'text-xs text-slate-400 mt-1', text: def.desc }),
@@ -221,7 +221,7 @@ function automationPanel(title, key, unlocked, labels) {
 
 function lockedPanel(text) {
   return h('div', { class: PANEL + ' text-center py-10 space-y-2' },
-    h('div', { class: 'text-slate-500 text-xs uppercase tracking-widest', text: 'Locked' }),
+    h('div', { class: 'text-slate-400 font-bold', text: 'Locked' }),
     h('p', { class: 'text-slate-400 text-sm', text }));
 }
 
@@ -292,13 +292,49 @@ function toast(text, tone = 'plain') {
   setTimeout(() => el.remove(), 4000);
 }
 
+
+// ---------- Next goal ----------
+
+const logProgress = (value, target) => {
+  const v = value instanceof Decimal ? value : new Decimal(value);
+  return v.gt(1) ? Math.min(1, v.log10() / new Decimal(target).log10()) : 0;
+};
+
+// The one thing the player should do next, so nobody has to read the rules.
+function nextGoal() {
+  const s = state;
+  if (!s.arrays.collector) return { text: 'Buy a Photon Collector', progress: s.photons.toNumber() / 10, tab: 'arrays' };
+  if (s.signal.queued && !s.signal.decoded) return { text: 'A message is coming in. Open the Signal tab', progress: 1, tab: 'signal' };
+  if (!s.arrays.lens) return { text: 'Buy a Gravitational Lens', progress: s.photons.toNumber() / 120, tab: 'arrays' };
+  if (!s.photonUpgrades.length && !s.stats.decodes) return { text: 'Buy your first upgrade', progress: s.photons.toNumber() / 50, tab: 'arrays' };
+  if (!s.stats.decodes) {
+    if (pendingTelemetry().gte(1)) return { text: 'Press Decode', progress: 1, tab: 'telemetry' };
+    return { text: 'Make 1e9 photons in one run to unlock Decode', progress: logProgress(s.run.photons, 1e9), tab: 'arrays' };
+  }
+  if (s.stats.decodes < 5 && !hasHorizon('eventmemory')) return { text: 'Decode 5 times to unlock autobuyers', progress: s.stats.decodes / 5, tab: 'telemetry' };
+  if (!s.stats.recals) {
+    if (pendingCalibration() >= 1) return { text: 'Press Recalibrate', progress: 1, tab: 'calibration' };
+    return { text: 'Earn 1e8 telemetry to unlock Recalibrate', progress: logProgress(s.telemetryRun, 1e8), tab: 'telemetry' };
+  }
+  if (!s.stats.crossings && !hasCalibration('autodecode')) return { text: 'Buy Auto-Decode in Calibration', progress: s.calibration, tab: 'calibration' };
+  if (!s.stats.crossings) {
+    if (canCross()) return { text: 'Cross the Horizon', progress: 1, tab: 'horizon' };
+    return { text: 'Reach 1.8e308 photons', progress: logProgress(s.stats.bestPhotons, HORIZON), tab: 'arrays' };
+  }
+  if (!repeatableMaxed('tidal')) return { text: 'Buy Tidal Lock with shards (Horizon tab)', progress: s.repeatables.tidal / 5, tab: 'horizon' };
+  if (challengeCount() < CHALLENGES.length) return { text: `Win all 4 challenges (${challengeCount()}/4)`, progress: challengeCount() / 4, tab: 'horizon' };
+  if (!isBroken()) return { text: 'Buy Break the Horizon', progress: s.shards.toNumber() / 3, tab: 'horizon' };
+  if (!s.flags.lightspeed) return { text: 'Reach 1e1000 photons to win', progress: logProgress(s.stats.bestPhotons, LIGHTSPEED), tab: 'horizon' };
+  return { text: 'You won. Finish the story and the star chart', progress: s.signal.story / TRANSMISSIONS.length, tab: 'signal' };
+}
+
 // ---------- Header ----------
 
 const headerEls = {};
 
 function buildHeader() {
-  const photons = h('div', { class: 'text-3xl sm:text-4xl text-sky-200 glow-sky tabular-nums leading-none' });
-  const pps = h('div', { class: 'text-xs text-slate-500 tabular-nums mt-1' });
+  const photons = h('div', { class: 'text-3xl sm:text-4xl text-sky-200 tabular-nums leading-none' });
+  const pps = h('div', { class: 'text-xs text-slate-400 mt-1' });
   const chip = (label, theme) => {
     const value = h('span', { class: `${THEMES[theme].chip} tabular-nums` });
     const el = h('div', { class: 'text-xs text-slate-500' }, `${label} `, value);
@@ -311,6 +347,13 @@ function buildHeader() {
   const decodeBtn = h('button', { onclick: () => ui.decode() });
   const recalBtn = h('button', { onclick: () => ui.recalibrate() });
   const crossBtn = h('button', { onclick: () => ui.cross() });
+  const goalText = h('span', { class: 'text-sm text-slate-100' });
+  const goalFill = h('div', { class: 'h-full bg-sky-400 transition-[width] duration-300' });
+  const goal = h('button', { class: 'press w-full text-left', onclick: () => selectTab(nextGoal().tab) },
+    h('div', { class: 'max-w-4xl mx-auto px-4 py-2 flex items-center gap-3' },
+      h('span', { class: 'shrink-0 text-sm font-bold text-sky-300', text: 'Goal' }),
+      goalText,
+      h('div', { class: 'ml-auto w-24 sm:w-40 h-1.5 rounded bg-slate-800 overflow-hidden shrink-0' }, goalFill)));
   const challenge = h('div', { class: 'border-t border-violet-900/60 bg-violet-950/40 text-xs text-violet-100' });
   const challengeText = h('span');
   const abandon = h('button', { class: `${SMALL_BTN} border-violet-700 hover:bg-violet-900/50`, text: 'Abandon', onclick: () => ui.abandonChallenge() });
@@ -320,13 +363,14 @@ function buildHeader() {
   header.append(
     h('div', { class: 'max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-3' },
       h('div', {},
-        h('div', { class: 'text-[10px] tracking-[0.35em] uppercase text-slate-500 mb-1', text: 'Sublight' }),
+        h('div', { class: 'text-sm font-bold text-slate-400 mb-1', text: 'Sublight' }),
         photons, pps),
       h('div', { class: 'flex flex-col items-start sm:items-end gap-1' },
         h('div', { class: 'flex flex-wrap gap-x-4 gap-y-1' }, telemetry.el, calibration.el, shards.el, fragments.el),
         h('div', { class: 'flex flex-wrap gap-2' }, decodeBtn, recalBtn, crossBtn))),
+    h('div', { class: 'bg-sky-950/40' }, goal),
     challenge);
-  Object.assign(headerEls, { photons, pps, telemetry, calibration, shards, fragments, decodeBtn, recalBtn, crossBtn, challenge, challengeText });
+  Object.assign(headerEls, { goalText, goalFill, photons, pps, telemetry, calibration, shards, fragments, decodeBtn, recalBtn, crossBtn, challenge, challengeText });
 }
 
 function updateHeader(prod) {
@@ -357,10 +401,14 @@ function updateHeader(prod) {
   setText(e.crossBtn, `Cross +${format(pendingS)}`);
   setClass(e.crossBtn, `${SMALL_BTN} ${THEMES.violet.button}`);
 
+  const g = nextGoal();
+  setText(e.goalText, g.text);
+  e.goalFill.style.width = `${Math.round(Math.max(0, Math.min(1, g.progress || 0)) * 100)}%`;
+
   show(e.challenge, Boolean(state.challenge));
   if (state.challenge) {
     const c = CHALLENGES.find(x => x.id === state.challenge);
-    setText(e.challengeText, `Challenge: ${c.name}. ${c.desc} Reach 1.8e308 photons and cross to complete it.`);
+    setText(e.challengeText, `Challenge: ${c.name}. ${c.desc} Reach 1.8e308 photons to win it.`);
   }
 }
 
@@ -410,7 +458,7 @@ function updateTabs() {
     const unlocked = tab.unlocked();
     setText(btn, !unlocked ? `${tab.label} (locked)` : tab.id === 'signal' && state.signal.queued ? `Signal (${state.signal.queued})` : tab.label);
     btn.setAttribute('aria-selected', String(active));
-    setClass(btn, `shrink-0 px-3 py-3 text-xs uppercase tracking-wider border-b-2 transition ${active ? 'border-sky-400 text-sky-100' : 'border-transparent hover:text-slate-200'} ${unlocked ? (active ? '' : 'text-slate-400') : 'text-slate-600'}`);
+    setClass(btn, `shrink-0 px-3 py-3 text-sm border-b-2 transition ${active ? 'border-sky-400 text-sky-100' : 'border-transparent hover:text-slate-200'} ${unlocked ? (active ? '' : 'text-slate-400') : 'text-slate-600'}`);
   }
 }
 
@@ -423,7 +471,7 @@ function buildArraysTab() {
     text: 'Gather photons',
     onclick: () => { gather(); burstFrom(gatherBtn, [125, 211, 252], 10); refresh(); },
   });
-  const gatherInfo = h('div', { class: 'text-xs text-slate-500 tabular-nums' });
+  const gatherInfo = h('div', { class: 'text-xs text-slate-400' });
 
   const modeBtns = ['1', '10', 'max'].map(mode => h('button', {
     text: mode === 'max' ? 'Max' : `x${mode}`,
@@ -436,8 +484,8 @@ function buildArraysTab() {
 
   const rows = ARRAYS.map(gen => {
     const owned = h('span', { class: 'text-slate-500 text-sm tabular-nums' });
-    const rate = h('div', { class: 'text-xs text-sky-400/90 mt-1 tabular-nums' });
-    const note = h('div', { class: 'text-xs text-slate-500 mt-1 tabular-nums' });
+    const rate = h('div', { class: 'text-xs text-sky-400/90 mt-1' });
+    const note = h('div', { class: 'text-xs text-slate-500 mt-1' });
     const amount = h('div', { class: 'text-xs text-slate-500' });
     const cost = h('div', { class: 'text-sm tabular-nums' });
     const buyBtn = h('button', {
@@ -450,7 +498,7 @@ function buildArraysTab() {
       rate, note),
     h('div', { class: 'text-right shrink-0' }, amount, cost));
     const autoBtn = h('button', {
-      class: 'shrink-0 w-14 border-l border-slate-800 text-[10px] uppercase tracking-wider',
+      class: 'shrink-0 w-14 border-l border-slate-800 text-xs',
       onclick: () => {
         state.automation.arrayToggles[gen.id] = !state.automation.arrayToggles[gen.id];
         refresh();
@@ -480,7 +528,7 @@ function buildArraysTab() {
     el,
     update(prod) {
       const step = milestoneStep();
-      setText(intro, `Arrays produce photons. Every ${step} you own of an array multiplies its output by ${milestoneBase()}. Array cost scaling: x${costRatio(ARRAYS[0]).toFixed(3)} per purchase.`);
+      setText(intro, `Buy arrays. They make photons for you. Every ${step} of one doubles${milestoneBase() === 3 ? ' (triples)' : ''} its output.`);
       const gain = gatherAmount(prod.total);
       setText(gatherInfo, `+${format(gain)} photons per click${hasTelemetry('echo') ? ', and 4 automatic clicks a second' : ''} (key G)`);
 
@@ -516,18 +564,18 @@ function buildArraysTab() {
         }
         const next = (Math.floor(ownedCount / step) + 1) * step;
         const tuned = state.tuning[g.id] ? `, tuned x${format(tuningMultiplier(g))}` : '';
-        setText(r.note, `x${format(arrayMultiplier(g))} from milestones and upgrades${tuned}. Next x${milestoneBase()} at ${formatInt(next)}.`);
+        setText(r.note, `Next x${milestoneBase()} boost at ${formatInt(next)} owned${tuned}.`);
         setText(r.amount, `buy ${formatInt(amount)}`);
         setText(r.cost, format(cost));
         setClass(r.cost, `text-sm tabular-nums ${affordable ? 'text-sky-200' : 'text-slate-600'}`);
         setDisabled(r.buyBtn, !affordable);
-        setClass(r.row, `rounded-md border flex transition ${affordable ? 'border-slate-700 hover:border-sky-600' : 'border-slate-800'}`);
+        setClass(r.row, `rounded-md border flex transition ${affordable ? 'border-sky-800 bg-slate-900/70 hover:border-sky-500' : 'border-transparent bg-slate-900/50'}`);
         show(r.autoBtn, autos);
         if (autos) {
           const on = state.automation.arrayToggles[g.id];
           setText(r.autoBtn, on ? 'auto on' : 'auto off');
           r.autoBtn.setAttribute('aria-label', `${g.name} autobuyer ${on ? 'on' : 'off'}`);
-          setClass(r.autoBtn, `shrink-0 w-14 border-l border-slate-800 text-[10px] uppercase tracking-wider ${on ? 'text-sky-300' : 'text-slate-600'}`);
+          setClass(r.autoBtn, `shrink-0 w-14 border-l border-slate-800 text-xs ${on ? 'text-sky-300' : 'text-slate-600'}`);
         }
       });
 
@@ -578,7 +626,7 @@ function buildTelemetryTab() {
   });
 
   const content = h('div', { class: 'space-y-8' },
-    h('p', { class: 'text-sm text-slate-400', text: 'Decoding trades your whole run for telemetry. Unspent telemetry boosts every array, and it buys permanent upgrades that make the next run faster.' }),
+    h('p', { class: 'text-sm text-slate-400', text: 'Decode to start over with telemetry. Telemetry makes everything faster, and buys upgrades.' }),
     h('div', { class: PANEL + ' space-y-3' },
       h('div', { class: 'flex flex-wrap items-center justify-between gap-3' },
         h('div', { class: 'space-y-1' }, telemetryLine, bonusLine),
@@ -598,8 +646,8 @@ function buildTelemetryTab() {
       show(content, unlocked);
       if (!unlocked) return;
       const pending = pendingTelemetry();
-      setText(telemetryLine, `Telemetry: ${format(state.telemetry)} (earned this Recalibration: ${format(state.telemetryRun)})`);
-      setText(bonusLine, `Bonus: x${format(telemetryBonus())} to all arrays, from ${hasTelemetry('archive') ? 'telemetry earned' : 'unspent telemetry'} ^${(BALANCE.telemetryBonusExponent + (challengeDone('silent') ? 0.15 : 0)).toFixed(2)}${inChallenge('silent') ? ' (disabled during Silent Relay)' : ''}.`);
+      setText(telemetryLine, `You have ${format(state.telemetry)} telemetry`);
+      setText(bonusLine, inChallenge('silent') ? 'Telemetry does not boost arrays during Silent Relay.' : `Your telemetry boosts all arrays x${format(telemetryBonus())}.`);
       const ready = pending.gte(1);
       setText(decodeBtn, ready ? `Decode for +${format(pending)} telemetry` : 'Decode');
       setClass(decodeBtn, `${BTN} ${ready ? THEMES.emerald.button : 'border-slate-700 text-slate-400'}`);
@@ -608,7 +656,7 @@ function buildTelemetryTab() {
       const progress = ready
         ? `Next telemetry at ${format(nextTelemetryAt())} photons this run.`
         : `Needs ${format(BALANCE.decodeThreshold)} photons this run (${format(state.run.photons)} so far).`;
-      setText(decodeInfo, `Resets your ${kept}. Gain: ${BALANCE.telemetryBase} x (photons this run / 1e9)^${telemetryExponent().toFixed(2)} x ${format(telemetryMultiplier())}. ${progress} Key D.`);
+      setText(decodeInfo, `You lose your ${kept}. ${progress}`);
       setText(upgradeNote, recalMilestone(3) ? 'Kept when you Recalibrate.' : state.flags.firstRecal ? 'Lost when you Recalibrate.' : 'Permanent until your first Recalibration.');
       upgrades.update();
       amplifier.update();
@@ -660,7 +708,7 @@ function buildCalibrationTab() {
       text: label,
       onclick: () => { if (tune(gen.id, amount())) refresh(); },
     }));
-    const row = h('div', { class: 'rounded-md border border-slate-800 p-3 flex flex-wrap items-center justify-between gap-2' },
+    const row = h('div', { class: 'rounded-md bg-slate-900/60 p-3 flex flex-wrap items-center justify-between gap-2' },
       h('div', { class: 'min-w-0' }, h('div', { class: 'text-sm text-slate-100' }, gen.name, ' ', points), mult),
       h('div', { class: 'flex gap-1' }, btns));
     return { gen, row, points, mult, btns };
@@ -687,7 +735,7 @@ function buildCalibrationTab() {
   });
 
   const content = h('div', { class: 'space-y-8' },
-    h('p', { class: 'text-sm text-slate-400', text: 'Recalibrating trades all your telemetry for calibration points. Put points into an array to tune it, or spend them on upgrades that change the rules.' }),
+    h('p', { class: 'text-sm text-slate-400', text: 'Recalibrate to start over with calibration points. Put points into an array to boost it, or spend them on upgrades.' }),
     h('div', { class: PANEL + ' space-y-3' },
       h('div', { class: 'flex flex-wrap items-center justify-between gap-3' },
         h('div', { class: 'space-y-1' }, pointsLine, tuningLine),
@@ -697,7 +745,7 @@ function buildCalibrationTab() {
     section(null,
       h('div', { class: 'flex items-center justify-between gap-2' }, heading('Array tuning'), respecBtn),
       h('div', { class: 'grid grid-cols-1 sm:grid-cols-2 gap-2' }, tuningRows.map(r => r.row))),
-    section('Calibration upgrades', h('p', { class: 'text-xs text-slate-500', text: 'Spent points are gone until your next crossing, when these upgrades reset.' }), upgrades.el),
+    section('Calibration upgrades', h('p', { class: 'text-xs text-slate-500', text: 'These reset when you cross the Horizon.' }), upgrades.el),
     section('Recalibration milestones', milestones.el));
   const el = h('div', {}, locked, content);
 
@@ -709,8 +757,8 @@ function buildCalibrationTab() {
       show(content, unlocked);
       if (!unlocked) return;
       const pending = pendingCalibration();
-      setText(pointsLine, `Unspent calibration points: ${formatInt(state.calibration)} (tuned: ${formatInt(allocatedPoints())})`);
-      setText(tuningLine, `Each tuned array gets x(1 + points)^${tuningPower().toFixed(1)}.`);
+      setText(pointsLine, `You have ${formatInt(state.calibration)} calibration points to spend`);
+      setText(tuningLine, 'More points in an array means a bigger boost.');
       const ready = pending >= 1;
       setText(recalBtn, ready ? `Recalibrate for +${amountOf(pending, 'point')}` : 'Recalibrate');
       setClass(recalBtn, `${BTN} ${ready ? THEMES.amber.button : 'border-slate-700 text-slate-400'}`);
@@ -718,7 +766,7 @@ function buildCalibrationTab() {
       const progress = ready
         ? `Next point at ${format(nextCalibrationAt())} telemetry earned.`
         : `Needs ${format(BALANCE.recalThreshold)} telemetry earned this Recalibration (${format(state.telemetryRun)} so far).`;
-      setText(recalInfo, `Resets ${recalResetList()}. Gain: (telemetry earned / 1e8)^${BALANCE.calibrationExponent} x ${format(calibrationMultiplier())}. ${progress} Key R.`);
+      setText(recalInfo, `You lose your ${recalResetList()}. ${progress}`);
       const hasPoints = state.calibration >= 1;
       tuningRows.forEach((r, i) => {
         const pts = state.tuning[r.gen.id];
@@ -786,7 +834,7 @@ function buildHorizonTab() {
   });
 
   const content = h('div', { class: 'space-y-8' },
-    h('p', { class: 'text-sm text-slate-400', text: 'Crossing the Horizon resets everything except Horizon Shards, Horizon upgrades, challenges, achievements and stats. Shards buy the upgrades that make every later run faster.' }),
+    h('p', { class: 'text-sm text-slate-400', text: 'Cross the Horizon to start over with shards. You keep shards, their upgrades and your achievements.' }),
     h('div', { class: PANEL + ' space-y-3' },
       h('div', { class: 'flex flex-wrap items-center justify-between gap-3' },
         h('div', { class: 'space-y-1' }, shardsLine, dragLine),
@@ -805,7 +853,7 @@ function buildHorizonTab() {
       show(locked, !unlocked);
       show(content, unlocked);
       if (!unlocked) return;
-      setText(shardsLine, `Horizon Shards: ${format(state.shards)} (earned in total: ${format(state.shardsEarned)})`);
+      setText(shardsLine, `You have ${format(state.shards)} Horizon Shards`);
       setText(dragLine, isBroken()
         ? `Horizon drag: production past 1.8e308/s counts at ^${dragExponent().toFixed(2)}.`
         : 'Photons stop at 1.8e308 until you break the Horizon.');
@@ -827,7 +875,7 @@ function buildHorizonTab() {
       for (const r of challengeRows) {
         const done = challengeDone(r.c.id);
         const active = inChallenge(r.c.id);
-        setClass(r.row, `rounded-md border p-3 space-y-2 ${active ? 'border-violet-500 bg-violet-950/40' : done ? THEMES.violet.owned : 'border-slate-800'}`);
+        setClass(r.row, `rounded-md border p-3 space-y-2 ${active ? 'border-violet-500 bg-violet-950/40' : done ? THEMES.violet.owned : 'border-transparent bg-slate-900/60'}`);
         setText(r.status, active ? 'In progress.' : done ? 'Completed. Reward active.' : 'Not completed.');
         setClass(r.status, `text-xs ${done || active ? 'text-violet-300' : 'text-slate-500'}`);
         const canStart = state.stats.crossings > 0 && !state.challenge;
@@ -861,7 +909,7 @@ function drawWave(ctx, w, hgt, freq, phase, colour, noise, time, dashed) {
 function buildSignalTab() {
   const status = h('div', { class: 'text-sm' });
   const surge = h('div', { class: 'text-xs text-emerald-300' });
-  const canvas = h('canvas', { class: 'w-full h-40 rounded-md bg-slate-950/80 border border-slate-800', width: 720, height: 200, 'aria-label': 'Signal scope' });
+  const canvas = h('canvas', { class: 'w-full h-40 rounded-md bg-slate-950/80', width: 720, height: 200, 'aria-label': 'Signal scope' });
   const ctx = canvas.getContext('2d');
   const freq = h('input', { type: 'range', min: '1', max: '6.5', step: '0.1', value: '3', class: 'w-full accent-amber-400', 'aria-label': 'Frequency' });
   const phase = h('input', { type: 'range', min: '0', max: '359', step: '1', value: '0', class: 'w-full accent-amber-400', 'aria-label': 'Phase' });
@@ -920,7 +968,7 @@ function buildSignalTab() {
   };
 
   const el = h('div', { class: 'space-y-8' },
-    h('p', { class: 'text-sm text-slate-400', text: 'Something out there is transmitting. Tune the dials until your wave matches the signal and hold it there to lock on. Every lock reveals more of the message, pays out Star Fragments and triggers a Signal Surge.' }),
+    h('p', { class: 'text-sm text-slate-400', text: 'Line up your yellow wave with the green one. Hold it there to decode a message.' }),
     h('div', { class: PANEL + ' space-y-4' },
       h('div', { class: 'flex flex-wrap items-center justify-between gap-2' }, status, surge),
       canvas, tuner, idle),
@@ -969,7 +1017,7 @@ function buildSignalTab() {
         setText(idle, 'Only static right now. Transmissions keep arriving while you are away, and up to ' + cap + ' can wait for you.');
       }
 
-      setText(fragmentsLine, `Star Fragments: ${formatInt(s.fragments)}. Light every star in a constellation to claim its reward.`);
+      setText(fragmentsLine, `You have ${formatInt(s.fragments)} Star Fragments. Light every star in a shape to win its reward.`);
       for (const card of cards) {
         const lit = s.stars[card.c.id];
         const done = lit >= card.c.stars.length;
@@ -979,7 +1027,7 @@ function buildSignalTab() {
         setText(card.btn, done ? 'Complete. Reward active.' : `Light a star: ${amountOf(cost, 'fragment')}`);
         setClass(card.btn, `${SMALL_BTN} w-full ${can ? 'border-amber-600 text-amber-100 hover:bg-amber-900/40' : 'border-slate-800 text-slate-500'}`);
         setDisabled(card.btn, !can);
-        setClass(card.el, `rounded-md border p-3 space-y-2 ${done ? 'border-amber-700/80 bg-amber-950/30' : 'border-slate-800 bg-slate-950/40'}`);
+        setClass(card.el, `rounded-md border p-3 space-y-2 ${done ? 'border-amber-700/80 bg-amber-950/30' : 'border-transparent bg-slate-900/60'}`);
         drawChart(card);
       }
 
@@ -1031,7 +1079,7 @@ function buildAchievementsTab() {
     }
     return h('div', { class: 'space-y-2' }, heading(label), row);
   });
-  detail.append(h('div', { class: 'text-xs text-slate-500', text: 'Hover over, tap or focus an achievement to see how to earn it.' }));
+  detail.append(h('div', { class: 'text-xs text-slate-500', text: 'Tap an achievement to see how to get it.' }));
   const el = h('div', { class: 'space-y-6' }, summary, detail, ...rows);
   return {
     el,
@@ -1040,7 +1088,7 @@ function buildAchievementsTab() {
       setText(summary, `${n} of ${ACHIEVEMENTS.length} unlocked. Each one boosts all arrays by 3%, compounding: x${format(achievementMultiplier())} right now.`);
       for (const { a, tile } of tiles) {
         const got = state.achievements.includes(a.id);
-        setClass(tile, `h-16 rounded-md border p-1 text-[10px] leading-tight text-center transition ${got ? 'border-amber-700/80 bg-amber-950/40 text-amber-100' : 'border-slate-800 text-slate-600 hover:border-slate-600'}`);
+        setClass(tile, `h-16 rounded-md border p-1 text-[10px] leading-tight text-center transition ${got ? 'border-amber-700/80 bg-amber-950/40 text-amber-100' : 'border-transparent bg-slate-900/60 text-slate-500 hover:border-slate-600'}`);
       }
     },
   };
@@ -1164,7 +1212,7 @@ function buildSettingsTab() {
       h('dl', { class: 'grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm' },
         keys.flatMap(([k, v]) => [h('dt', { class: 'text-sky-300 tabular-nums', text: k }), h('dd', { class: 'text-slate-400', text: v })]))),
     section('About',
-      h('p', { class: 'text-xs text-slate-500 leading-relaxed', text: 'Sublight Idle. Built with HTML, Tailwind CSS and break_infinity.js. Your save lives in this browser, so export it now and then to keep a backup.' })));
+      h('p', { class: 'text-xs text-slate-500 leading-relaxed', text: 'Your save lives in this browser. Export it now and then so you have a backup.' })));
   return {
     el,
     update() {
