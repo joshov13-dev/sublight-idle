@@ -44,3 +44,25 @@ button:disabled {
   background: rgb(34 211 238);
   transition: width 0.1s linear;
 }
+
+.glow-violet { border-color: rgb(167 139 250 / 0.4); box-shadow: 0 0 8px rgb(167 139 250 / 0.15); }
+.glow-violet:hover:not(:disabled) { border-color: rgb(167 139 250 / 0.8); box-shadow: 0 0 12px rgb(167 139 250 / 0.35); }
+.glow-emerald { border-color: rgb(52 211 153 / 0.4); box-shadow: 0 0 8px rgb(52 211 153 / 0.15); }
+.glow-emerald:hover:not(:disabled) { border-color: rgb(52 211 153 / 0.8); box-shadow: 0 0 12px rgb(52 211 153 / 0.35); }
+
+.ping-btn:active:not(:disabled) { transform: scale(0.98); }
+button.owned { opacity: 0.6; border-color: rgb(63 63 70); box-shadow: none; }
+
+.thread-cell {
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgb(63 63 70);
+}
+.thread-cell.idle { background: rgb(63 63 70); }
+.thread-cell.active {
+  background: rgb(52 211 153);
+  border-color: rgb(52 211 153);
+  box-shadow: 0 0 6px rgb(52 211 153 / 0.6);
+}
+.progress > div.bar-emerald { background: rgb(52 211 153); transition: none; }
+.progress > div.bar-violet { background: rgb(167 139 250); }

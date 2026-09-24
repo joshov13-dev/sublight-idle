@@ -31,12 +31,24 @@ SL.save = (function () {
     }
   }
 
-  // Returns seconds simulated so the UI can report it.
+  // Simulates time away in slices so upgrades and autobuyers kick in along the way.
+  // Returns a summary for the "welcome back" popup.
   function applyOffline() {
-    const elapsed = Math.min((Date.now() - SL.state.lastTick) / 1000, cfg.OFFLINE_CAP_SEC);
-    if (elapsed > 1) SL.engine.tick(elapsed);
-    SL.state.lastTick = Date.now();
-    return elapsed;
+    const s = SL.state;
+    const elapsed = Math.min(Math.max(0, (Date.now() - s.lastTick) / 1000), cfg.OFFLINE_CAP_SEC);
+    const before = { photons: s.lifetimePhotons, bytes: s.lifetimeBytes };
+
+    if (elapsed > 1) {
+      const steps = Math.min(cfg.OFFLINE_MAX_STEPS, Math.ceil(elapsed));
+      for (let i = 0; i < steps; i++) SL.engine.tick(elapsed / steps);
+    }
+    s.lastTick = Date.now();
+
+    return {
+      seconds: elapsed,
+      photons: s.lifetimePhotons.sub(before.photons),
+      bytes: s.lifetimeBytes.sub(before.bytes),
+    };
   }
 
   function exportString() {

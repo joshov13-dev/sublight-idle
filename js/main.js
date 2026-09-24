@@ -3,10 +3,10 @@
   const cfg = SL.config;
 
   SL.save.load();
-  const offlineSec = SL.save.applyOffline();
-  if (offlineSec > 60) console.info(`Offline progress: ${Math.round(offlineSec)}s`);
+  const offline = SL.save.applyOffline();
 
   SL.ui.init();
+  if (offline.seconds >= cfg.OFFLINE_REPORT_SEC) SL.ui.showOfflineReport(offline);
 
   let last = Date.now();
   setInterval(() => {

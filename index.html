@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en-GB" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -13,16 +13,16 @@
 <body class="bg-zinc-950 text-zinc-300 min-h-screen">
 
   <!-- Header / status bar -->
-  <header class="border-b border-zinc-800 px-4 py-3 flex flex-wrap gap-6 text-sm">
+  <header class="border-b border-zinc-800 px-4 py-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
     <h1 class="text-cyan-400 font-semibold tracking-widest">SUB-LIGHT</h1>
-    <div>Photons: <span id="res-photons">0</span></div>
-    <div>Photons/sec: <span id="res-pps">0</span></div>
-    <div id="res-bytes-wrap" class="hidden">Raw Bytes: <span id="res-bytes">0</span></div>
-    <div id="res-cores-wrap" class="hidden">Pulsar Cores: <span id="res-cores">0</span></div>
+    <div>Photons: <span id="res-photons" class="text-zinc-100">0</span></div>
+    <div>Photons/sec: <span id="res-pps" class="text-zinc-100">0</span></div>
+    <div id="res-bytes-wrap" class="hidden">Raw Bytes: <span id="res-bytes" class="text-emerald-300">0</span></div>
+    <div id="res-cores-wrap" class="hidden">Pulsar Cores: <span id="res-cores" class="text-violet-300">0</span></div>
   </header>
 
   <!-- Tab bar. data-tab must match a section's data-panel. -->
-  <nav id="tabs" class="flex gap-1 px-4 pt-3 border-b border-zinc-800 text-sm">
+  <nav id="tabs" class="flex flex-wrap gap-1 px-4 pt-3 border-b border-zinc-800 text-sm">
     <button class="tab-btn" data-tab="array">Array</button>
     <button class="tab-btn hidden" data-tab="telemetry">Telemetry</button>
     <button class="tab-btn" data-tab="spectrometer">Spectrometer</button>
@@ -30,10 +30,19 @@
     <button class="tab-btn" data-tab="console">Console</button>
   </nav>
 
-  <main class="p-4">
+  <main class="p-4 max-w-4xl">
     <!-- 1. Array: manual ping + generators -->
     <section class="panel" data-panel="array">
-      <button id="btn-ping" class="glow-border px-6 py-4 rounded mb-4">Manual Signal Ping</button>
+      <button id="btn-ping" class="glow-border ping-btn px-8 py-6 rounded mb-1 text-lg text-cyan-300">
+        Manual Signal Ping
+      </button>
+      <p class="text-xs text-zinc-500 mb-4">+<span id="ping-value">1</span> photons per ping</p>
+
+      <div id="next-unlock" class="mb-4 text-xs text-zinc-500">
+        <div class="flex justify-between mb-1"><span>Telemetry unlocks at 10,000 photons</span><span id="next-unlock-pct"></span></div>
+        <div class="progress"><div id="next-unlock-bar"></div></div>
+      </div>
+
       <div id="buy-mode" class="flex gap-2 mb-3 text-xs">
         <button class="buy-mode-btn" data-mode="1">Buy 1</button>
         <button class="buy-mode-btn" data-mode="10">Buy 10</button>
@@ -42,9 +51,28 @@
       <div id="generator-list" class="grid gap-2"></div>
     </section>
 
-    <!-- 2. Telemetry: TODO processing threads + byte upgrades -->
+    <!-- 2. Telemetry: processing threads + byte upgrades -->
     <section class="panel" data-panel="telemetry">
-      <p class="text-zinc-500">Telemetry processing: not yet built.</p>
+      <div class="glow-border rounded p-4 mb-4">
+        <div class="flex flex-wrap justify-between gap-2 mb-2">
+          <div class="text-zinc-100">Processing Threads</div>
+          <div class="text-xs text-zinc-500">
+            Active <span id="thr-active">0</span> / owned <span id="thr-owned">0</span> (max <span id="thr-max"></span>)
+          </div>
+        </div>
+        <p class="text-xs text-zinc-500 mb-3">
+          Each active thread diverts 5% of your photon output and turns it into Raw Bytes (100 photons = 1 byte).
+          Currently diverting <span id="thr-share">0%</span>, producing <span id="thr-bps" class="text-emerald-300">0</span> bytes/sec.
+        </p>
+        <div id="thr-cells" class="flex flex-wrap gap-1 mb-3"></div>
+        <div class="progress mb-3"><div id="thr-bar" class="bar-emerald"></div></div>
+        <div class="flex flex-wrap gap-2 text-sm">
+          <button id="btn-thread-buy" class="glow-border px-3 py-1 rounded">Buy Thread: <span id="thr-cost"></span></button>
+          <button id="btn-thread-down" class="border border-zinc-700 px-3 py-1 rounded">- Deactivate</button>
+          <button id="btn-thread-up" class="border border-zinc-700 px-3 py-1 rounded">+ Activate</button>
+        </div>
+      </div>
+      <div id="telemetry-list" class="grid gap-2 sm:grid-cols-3"></div>
     </section>
 
     <!-- 3. Spectrometer: one-off upgrades -->
@@ -52,22 +80,56 @@
       <div id="upgrade-list" class="grid gap-2 sm:grid-cols-3"></div>
     </section>
 
-    <!-- 4. Calibration: TODO prestige -->
+    <!-- 4. Calibration: prestige -->
     <section class="panel" data-panel="calibration">
-      <p class="text-zinc-500">Calibration: not yet built.</p>
+      <div class="glow-border glow-violet rounded p-4 mb-4">
+        <div class="text-zinc-100 mb-2">Re-Calibrate Array</div>
+        <p class="text-xs text-zinc-500 mb-3">
+          Resets Photons, Generators, Bytes, Threads and Telemetry upgrades. Spectrometer upgrades are kept.
+          Each Pulsar Core gives +10% to all production, forever. Cores = floor(sqrt(bytes this run / 1,000,000)).
+        </p>
+        <div class="grid sm:grid-cols-3 gap-2 text-sm mb-3">
+          <div>Bytes this run: <span id="cal-run-bytes" class="text-emerald-300"></span></div>
+          <div>Cores on reset: <span id="cal-gain" class="text-violet-300"></span></div>
+          <div>Current bonus: <span id="cal-bonus" class="text-violet-300"></span></div>
+        </div>
+        <div class="text-xs text-zinc-500 flex justify-between mb-1">
+          <span>Next core at <span id="cal-next"></span> bytes</span><span id="cal-next-pct"></span>
+        </div>
+        <div class="progress mb-3"><div id="cal-bar" class="bar-violet"></div></div>
+        <button id="btn-recalibrate" class="glow-border glow-violet px-4 py-2 rounded text-violet-300">Re-Calibrate Array</button>
+      </div>
+      <div class="text-zinc-100 mb-2">Automation Perks</div>
+      <div id="perk-list" class="grid gap-2 sm:grid-cols-2"></div>
     </section>
 
     <!-- 5. Console: settings -->
     <section class="panel" data-panel="console">
       <div class="flex flex-wrap gap-2 mb-3">
+        <button id="btn-save" class="glow-border px-3 py-1 rounded">Save Now</button>
         <button id="btn-export" class="glow-border px-3 py-1 rounded">Export Save</button>
         <button id="btn-import" class="glow-border px-3 py-1 rounded">Import Save</button>
         <button id="btn-format" class="glow-border px-3 py-1 rounded">Format: <span id="format-label"></span></button>
         <button id="btn-reset" class="border border-red-800 text-red-400 px-3 py-1 rounded">Hard Reset</button>
       </div>
-      <textarea id="save-box" class="w-full h-32 bg-zinc-900 border border-zinc-800 p-2 text-xs" placeholder="Save string"></textarea>
+      <p id="console-msg" class="text-xs text-cyan-400 h-4 mb-2"></p>
+      <textarea id="save-box" class="w-full h-32 bg-zinc-900 border border-zinc-800 p-2 text-xs mb-4" placeholder="Press Export to get your save string, or paste one here and press Import."></textarea>
+      <div class="text-zinc-100 mb-2">Stats</div>
+      <dl id="stats" class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs max-w-md"></dl>
     </section>
   </main>
+
+  <!-- Modal, shared by hard reset, calibration and the offline report. -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+    <div class="glow-border bg-zinc-900 rounded p-5 max-w-sm w-full">
+      <div id="modal-title" class="text-cyan-300 mb-2"></div>
+      <div id="modal-body" class="text-sm text-zinc-400 mb-4"></div>
+      <div class="flex justify-end gap-2 text-sm">
+        <button id="modal-cancel" class="border border-zinc-700 px-3 py-1 rounded">Cancel</button>
+        <button id="modal-confirm" class="glow-border px-3 py-1 rounded"></button>
+      </div>
+    </div>
+  </div>
 
   <!-- Load order matters: each file adds to the global SL namespace. -->
   <script src="js/config.js"></script>
