@@ -1,0 +1,30 @@
+[hidden] { display: none !important; }
+
+body {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.glow-sky { text-shadow: 0 0 14px rgba(125, 211, 252, 0.55); }
+.glow-violet { text-shadow: 0 0 14px rgba(196, 181, 253, 0.55); }
+
+button:not(:disabled) { cursor: pointer; }
+button:disabled { cursor: default; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.press:active:not(:disabled) { transform: scale(0.98); }
+
+.tabs-scroll { scrollbar-width: none; }
+.tabs-scroll::-webkit-scrollbar { display: none; }
+
+.toast-enter { animation: toast-in 0.2s ease-out; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
