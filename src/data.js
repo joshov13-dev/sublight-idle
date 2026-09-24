@@ -51,7 +51,7 @@ const TELEMETRY_UPGRADES = [
   { id: 'packets', name: 'Compressed Packets', cost: 25, desc: 'Telemetry gain x2.' },
   { id: 'harmonics', name: 'Milestone Harmonics', cost: 60, desc: 'Milestones every 20 owned instead of 25.' },
   { id: 'afterglow', name: 'Afterglow', cost: 150, desc: 'All arrays x(1 + minutes in this run), up to x100.' },
-  { id: 'archive', name: 'Archive Access', cost: 400, desc: 'The telemetry bonus counts all telemetry earned this Recalibration, not just unspent.' },
+  { id: 'archive', name: 'Archive Access', cost: 400, desc: 'Spending telemetry no longer shrinks your telemetry boost.' },
 ];
 
 const TELEMETRY_REPEATABLES = [

@@ -87,9 +87,9 @@ function showWelcome() {
   openModal({
     title: 'Sublight Idle',
     body: h('div', { class: 'space-y-3 text-sm text-slate-300 leading-relaxed' },
-      h('p', { text: 'Your probe drifts through deep space, catching stray light.' }),
-      h('p', { text: 'Gather photons by hand, then spend them on arrays that gather for you. Buy upgrades, and watch for new layers as your numbers grow.' }),
-      h('p', { class: 'text-slate-400', text: 'The game saves itself and keeps running while you are away.' })),
+      h('p', { text: '1. Click Gather to catch photons.' }),
+      h('p', { text: '2. Spend photons on arrays. They gather for you.' }),
+      h('p', { text: '3. Follow the goal at the top. It always shows your next step.' })),
     actions: [{ label: 'Begin', style: 'primary' }],
   });
 }
@@ -98,7 +98,7 @@ function showEnding() {
   openModal({
     title: 'Lightspeed',
     body: h('div', { class: 'space-y-3 text-sm text-slate-300 leading-relaxed' },
-      h('p', { text: 'Photon count: 1e1000. The probe slips past the light barrier, and the sublight era is over.' }),
+      h('p', { text: 'You hit 1e1000 photons and broke the speed of light. You won.' }),
       h('p', { class: 'tabular-nums', text: `Time played: ${formatTime(state.stats.timePlayed)}. Crossings: ${formatInt(state.stats.crossings)}. Achievements: ${state.achievements.length} of ${ACHIEVEMENTS.length}.` }),
       h('p', { class: 'text-slate-400', text: 'Thank you for playing. Everything still runs if you want to keep going.' })),
     actions: [{ label: 'Keep playing', style: 'primary' }],
@@ -109,6 +109,28 @@ function installHooks() {
   hooks.log = text => { if (!quiet) toast(text, 'log'); };
   hooks.achievement = a => { if (!quiet) toast(`Achievement unlocked: ${a.name}`, 'achievement'); };
   hooks.lightspeed = () => { endingPending = true; };
+  hooks.signal = ({ fragments, story, perfect }) => {
+    if (quiet) return;
+    const scope = document.querySelector('#panel-signal canvas');
+    if (scope) burstFrom(scope, [52, 211, 153], 50);
+    const reward = `+${fragments} Star Fragment${fragments === 1 ? '' : 's'}${perfect ? ' (perfect lock bonus)' : ''}. Signal Surge active.`;
+    if (!story) {
+      toast(`Signal locked. ${reward}`, 'log');
+      return;
+    }
+    const line = h('p', { class: 'transmission text-emerald-200 text-base leading-relaxed min-h-[3rem]' });
+    openModal({
+      title: `Transmission ${state.signal.story} of ${TRANSMISSIONS.length}`,
+      body: h('div', { class: 'space-y-3' }, line, h('p', { class: 'text-xs text-slate-400', text: reward })),
+      actions: [{ label: 'Keep listening', style: 'primary' }],
+    });
+    let i = 0;
+    const type = setInterval(() => {
+      i += 1;
+      line.textContent = story.slice(0, i);
+      if (i >= story.length) clearInterval(type);
+    }, 28);
+  };
   ui.save = manual => {
     const ok = saveGame();
     if (manual) toast(ok ? 'Game saved.' : 'Could not save. Your browser may be blocking storage.');
@@ -139,7 +161,7 @@ function frame() {
 }
 
 const KEY_ACTIONS = {
-  g: () => gather(),
+  g: () => { gather(); orreryPulse(); },
   m: () => buyAllArrays(),
   d: () => ui.decode(),
   r: () => ui.recalibrate(),
@@ -175,6 +197,7 @@ function boot() {
   setNotation(state.settings.notation);
   installHooks();
   buildUI();
+  initSky();
   if (result.fresh) addLog(SIGNAL_LINES.start);
   if (result.away > 10) catchUp(result.away);
   state.lastTick = Date.now();
