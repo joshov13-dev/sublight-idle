@@ -1,0 +1,14 @@
+{
+  "name": "sublight-idle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A minimalist deep-space idle game.",
+  "scripts": {
+    "build:css": "tailwindcss -i src/tailwind.input.css -o src/tailwind.css --minify",
+    "watch:css": "tailwindcss -i src/tailwind.input.css -o src/tailwind.css --watch",
+    "simulate": "node tools/simulate.js"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

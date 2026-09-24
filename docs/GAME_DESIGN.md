@@ -1,176 +1,192 @@
 # Sublight Idle: Game Design
 
-The plan for the full game. All numbers are starting points for balancing, not final values.
+This describes the game as built. All four layers, automation, challenges and the ending are in place. The numbers were tuned with `tools/simulate.js`, which plays the real game logic with a simple bot.
 
 ## Pillars
 
-- **Minimalist.** Dark UI with one accent colour. Everything is text and numbers, no art assets.
-- **Always something to do next.** The next unlock is always shown, even when it is locked.
-- **Layers that change how you play.** Each prestige layer adds a new system, not just a bigger multiplier.
-- **Respect the player's time.** Offline progress, automation, and no required clicking after the early game.
+- **Minimalist.** Dark UI, text and numbers only, one accent colour per layer (sky, emerald, amber, violet).
+- **Always something to do next.** Locked tabs stay visible and say how to unlock them.
+- **Layers that change how you play.** Each layer adds a new system: telemetry upgrades, array tuning, challenges.
+- **Respect the player's time.** Offline progress, autobuyers and auto-resets remove the need to click later on.
 
-## Resources and layers
+## Pacing
 
-| Layer | Resource | Reset action | Unlocks at | Resets | Target time to first reset |
-|---|---|---|---|---|---|
-| 1 | Photons | (base layer) | start | nothing | n/a |
-| 2 | Telemetry | **Decode** | 1e9 photons in current run | photons, arrays, photon upgrades | 20 to 30 min |
-| 3 | Calibration | **Recalibrate** | 1e6 telemetry in current run | layers 1 and 2 | 3 to 5 hours |
-| 4 | Horizon Shards | **Cross the Horizon** | 1.8e308 photons (the "infinity" break_infinity.js exists for) | layers 1 to 3 | 2 to 4 days |
+Times for the simulated bot, which plays efficiently and never idles. Real players will be slower.
 
-Each layer is always shown in the UI. Before it unlocks, it appears greyed out with its unlock requirement.
+| Moment | Bot time |
+|---|---|
+| First Decode | 26 min |
+| First Recalibrate | 1.7 h |
+| First Horizon crossing | 21.5 h |
+| Crossings down to about 2 hours each (Tidal Lock maxed) | about 70 h |
+| All 4 challenges done, Horizon broken | 90 h |
+| Lightspeed (1e1000 photons, the ending) | 109 h |
 
-## Layer 1: Photons (built)
+## Layers
 
-### Arrays (generators)
+| Layer | Resource | Reset action | Unlocks at | Gain |
+|---|---|---|---|---|
+| 1 | Photons | none | start | arrays and gathering |
+| 2 | Telemetry | **Decode** | 1e9 photons in one run | 3 × (photons this run / 1e9)^0.4 × multipliers |
+| 3 | Calibration points | **Recalibrate** | 1e8 telemetry in one Recalibration | (telemetry this Recalibration / 1e8)^0.08 × multipliers |
+| 4 | Horizon Shards | **Cross the Horizon** | 1.8e308 photons | 1 per crossing; after breaking the Horizon, x10 per 100 orders of magnitude past 1.8e308 |
 
-Every array produces photons directly. Each 25 owned doubles that array's output.
+What each reset clears:
 
-| # | Array | Base cost | Cost ratio | Base rate /s | Status |
-|---|---|---|---|---|---|
-| 1 | Photon Collector | 10 | 1.15 | 0.5 | built |
-| 2 | Gravitational Lens | 120 | 1.16 | 4 | built |
-| 3 | Pulsar Array | 1.5e3 | 1.17 | 30 | built |
-| 4 | Telemetry Relay | 2e4 | 1.18 | 250 | built |
-| 5 | Quasar Tap | 3e5 | 1.19 | 2.2e3 | built |
-| 6 | Magnetar Loom | 5e6 | 1.20 | 2e4 | planned |
-| 7 | Neutrino Sieve | 1e8 | 1.21 | 1.8e5 | planned |
-| 8 | Dyson Lattice | 2.5e9 | 1.22 | 1.7e6 | planned |
+- **Decode:** photons, arrays and photon upgrades (upgrades are kept from 2 Decodes).
+- **Recalibrate:** photons, arrays, photon upgrades and telemetry, plus telemetry upgrades, Amplifier and Decoder levels and the Decode count until milestones keep them.
+- **Cross:** everything except shards, Horizon upgrades and resonances, challenges, achievements, stats and settings.
 
-Arrays 6 to 8 unlock one at a time as you reach 10% of their base cost, so the list grows as you play.
+## Layer 1: Photons
+
+Every run starts with 10 photons (1,000 with Signal Memory), enough for a first Collector.
+
+### Arrays
+
+All arrays cost x1.15 more per purchase. Every 25 owned multiplies that array by 2. Telemetry, calibration, Horizon and challenge rewards improve both numbers.
+
+| # | Array | Base cost | Base rate /s |
+|---|---|---|---|
+| 1 | Photon Collector | 10 | 0.5 |
+| 2 | Gravitational Lens | 120 | 5 |
+| 3 | Pulsar Array | 1.5e3 | 45 |
+| 4 | Telemetry Relay | 2e4 | 400 |
+| 5 | Quasar Tap | 3e5 | 3.5e3 |
+| 6 | Magnetar Loom | 5e6 | 3.2e4 |
+| 7 | Neutrino Sieve | 1e8 | 3e5 |
+| 8 | Dyson Lattice | 2.5e9 | 3e6 |
+
+An array appears once you have produced 10% of its base cost this run, and stays visible after that.
+
+**Gather** gives 1 photon plus 5% of photons/s per click.
 
 ### Photon upgrades
 
-These are one-off purchases in photons, shown in a grid. All are lost on Decode.
+| Upgrade | Cost | Effect |
+|---|---|---|
+| Focused Gathering | 50 | Gather gives 3 photons plus 10% of photons/s |
+| Collector Coating | 300 | Collectors x3 |
+| Lens Grinding | 3e3 | Lenses x3 |
+| Resonant Sync | 3e4 | All arrays x(1 + arrays owned / 100) |
+| Pulsar Timing | 3e5 | Pulsar Arrays x3 |
+| Relay Compression | 3e6 | Telemetry Relays x3 |
+| Deep Field | 3e7 | All arrays x2 |
+| Quasar Harness | 3e8 | Quasar Taps x3 |
+| Magnetar Weave | 3e9 | Magnetar Looms x3 |
+| Deep Sieve | 3e10 | Neutrino Sieves and Dyson Lattices x3 |
+
+## Layer 2: Telemetry
+
+- **Bonus:** all arrays x(1 + unspent telemetry)^0.3. Archive Access switches it to telemetry earned this Recalibration, so spending no longer lowers it.
+- **Upgrades** (one-off, lost on Recalibrate until 3 Recalibrations):
 
 | Upgrade | Cost | Effect |
 |---|---|---|
-| Focused Gathering | 50 | Gather gives +1% of photons/s (from 5% to 6%) |
-| Collector Coating | 500 | Collectors x3 |
-| Lens Grinding | 5e3 | Lenses x3 |
-| Resonant Sync | 5e4 | Every array gets +1% per 10 total arrays owned |
-| Pulsar Timing | 5e5 | Pulsar Arrays x3 |
-| Relay Compression | 5e6 | Telemetry Relays x3 |
-| Deep Field | 5e7 | All arrays x2 |
-| Quasar Harness | 5e8 | Quasar Taps x3 |
+| Signal Memory | 1 | Start each run with 1,000 photons |
+| Carrier Wave | 2 | All arrays x3 |
+| Array Blueprints | 5 | Array cost scaling 20% slower |
+| Echo Gathering | 10 | Gather fires by itself 4 times a second |
+| Compressed Packets | 25 | Telemetry gain x2 |
+| Milestone Harmonics | 60 | Milestones every 20 owned instead of 25 |
+| Afterglow | 150 | All arrays x(1 + minutes in this run), up to x100 |
+| Archive Access | 400 | The bonus counts telemetry earned, not just unspent |
 
-## Layer 2: Telemetry (Decode)
+- **Signal processing** (repeatable): Signal Amplifier, all arrays x2 per level, cost 5 × 10^level. Decoder Efficiency, telemetry gain x1.25 per level, cost 50 × 10^level.
+- **Decode milestones:** 2 keep photon upgrades; 5 unlock the array and upgrade autobuyers (every 2 seconds); 10 make them run every tick; 20 double telemetry gain.
 
-- **Gain:** `floor(sqrt(photonsThisRun / 1e9))`. Show a live preview of the gain on the Decode button.
-- **Passive bonus:** each unspent telemetry point gives +2% photon production. This makes saving versus spending a real choice.
-- **Telemetry upgrades** are permanent across Decodes and lost on Recalibrate:
+## Layer 3: Calibration
+
+- **Tuning:** put points into an array for x(1 + points)^1.5 on that array. Points only come back through **Respec**, which also restarts the current run.
+- **Upgrades** (spent points are gone until the next crossing):
 
 | Upgrade | Cost | Effect |
 |---|---|---|
-| Signal Memory | 1 | Start each run with 100 photons |
-| Carrier Wave | 2 | All arrays x2 |
-| Array Blueprints | 5 | Arrays cost 5% less (applies to cost ratio) |
-| Echo Gathering | 10 | Gather also auto-clicks once per second |
-| Compressed Packets | 25 | Telemetry gain x1.5 |
-| Background Decoding | 50 | Gain 1% of pending telemetry per second while not Decoding |
-| Milestone Harmonics | 100 | Milestones every 20 owned instead of 25 |
-| Unlock Arrays 6 to 8 early | 250 | Magnetar, Sieve and Lattice visible from the start of a run |
+| Auto-Decode | 1 | Unlock Auto-Decode |
+| Harmonic Lock | 2 | Milestones multiply by 3 instead of 2 |
+| Wide Band | 3 | Telemetry gain uses ^0.55 instead of ^0.4 |
+| Precision Tuning | 5 | Tuning uses ^2 instead of ^1.5 |
+| Amplifier Autobuyer | 8 | Buys Signal Amplifier and Decoder Efficiency |
+| Pulsar Lock | 13 | Photon production ^1.05 |
 
-- **Decode milestones** (based on total Decodes, kept until Recalibrate): 1 Decode keeps buy-max unlocked, 5 Decodes keeps photon upgrades bought, 10 Decodes unlocks the array autobuyer.
+- **Recalibration milestones:** 1 keeps the Decode count, 3 keep telemetry upgrades, 6 keep Amplifier and Decoder levels.
 
-## Layer 3: Calibration (Recalibrate)
+## Layer 4: Horizon
 
-- **Gain:** `floor((telemetryThisRun / 1e6) ^ 0.3)`.
-- **Array tuning.** Each calibration point can be put into one array. Every point in an array gives x1.5 to that array (multiplicative). Points can be moved freely, but only between runs. This is where builds come from.
-- **Automation.** Calibration unlocks autobuyers, bought with calibration points:
-  - Array autobuyer (per array, with an on/off toggle)
-  - Photon upgrade autobuyer
-  - Auto-Decode, triggered at a set amount of telemetry or after a set time
-- **Recalibration milestones:** keep telemetry upgrades, then start runs with arrays, then passive telemetry gain without Decoding.
+Photons stop at 1.8e308 until the Horizon breaks.
 
-## Layer 4: Horizon Shards (Cross the Horizon)
+### Horizon upgrades
 
-This is the late-game loop and the point where break_infinity.js starts to matter.
+| Upgrade | Cost | Effect |
+|---|---|---|
+| Singularity Lens | 1 | Telemetry and calibration gain x(1 + shards earned) |
+| Event Memory | 1 | All Decode and Recalibration milestones always active |
+| Stellar Seed | 1 | Start each Horizon run with 100 calibration points |
+| Auto-Recalibrate | 1 | Unlock Auto-Recalibrate |
+| Deep Seed | 2 | Start each Horizon run with 1e6 calibration points |
+| Break the Horizon | 3 | Needs all 4 challenges. Photons pass 1.8e308 and shard gain scales |
+| Auto-Cross | 10 | After the break: unlock Auto-Cross |
 
-- **Gain:** 1 shard per crossing at first, then scaled by how far past 1.8e308 you reached.
-- **Horizon challenges.** You restart layers 1 to 3 with a restriction and get a permanent reward for finishing. Examples:
-  - *Dark Sky:* arrays 5 to 8 are disabled.
-  - *Silent Relay:* no telemetry passive bonus.
-  - *Drift:* each array bought raises every array's cost ratio.
-  - *Single Band:* you can only own one kind of array.
-- **Shard upgrades:** larger permanent multipliers, faster automation, and an option to **break the horizon**. Breaking it lets photons go past 1.8e308 and sets up any future layers.
+### Resonances (repeatable)
+
+- **Tidal Lock:** milestones 1 owned sooner per level, 5 levels costing 1, 1, 2, 2 and 3 shards. This is the main speed-up between crossings.
+- **Horizon Resonance** (after the break): horizon drag 0.01 weaker per level, 15 levels costing 50 up to 1e6 shards.
+- **Shard Condenser** (after the break): shard gain x2 per level, cost 100 × 10^level.
+
+### Challenges
+
+Open after the first crossing. Starting one resets like a crossing. Reach 1.8e308 photons under the restriction, then cross to complete it.
+
+| Challenge | Restriction | Reward |
+|---|---|---|
+| Dark Sky | Only arrays 1 to 4 produce | Array cost scaling a further 10% slower |
+| Silent Relay | No telemetry bonus | Telemetry bonus uses ^0.45 instead of ^0.3 |
+| Frozen Lattice | Milestones need 10 more owned | Milestones 2 owned sooner |
+| Single Band | Only your highest owned array produces | Tuning uses an extra ^0.5 |
+
+### Beyond the Horizon
+
+After the break, production above 1.8e308/s is softcapped by **horizon drag**: the excess counts at ^0.50, raised by Horizon Resonance. Each Resonance level moves the point where a run stalls further out (about 1e545 at ^0.50, 1e790 at ^0.60, past 1e1000 at ^0.64).
+
+**Lightspeed**, 1e1000 photons, is the ending. A summary screen appears and the game carries on.
 
 ## Cross-cutting systems
 
-### Achievements
-- About 40 at launch, in rows by layer (for example: first array, 100 collectors, first Decode, finish every challenge).
-- Each achievement gives +1% photon production, so they always matter.
-- Pop up a toast on unlock. Show locked ones with a hint.
+- **Achievements:** 40, in 5 rows. Each gives all arrays x1.03, compounding.
+- **Signal log:** terminal-style lines at key moments, shown as toasts and kept in the Log tab.
+- **Stats:** totals, fastest runs and the current run for each layer.
+- **Settings:** notation (scientific, engineering, letters, logarithm), autosave interval, offline progress, reset confirmations.
+- **Keys:** G gather, 1 to 8 buy an array, M buy max of all, D Decode, R Recalibrate, C cross.
+- **Automation:** Auto-Decode, Auto-Recalibrate and Auto-Cross each fire on a gain amount, a multiple of what you have earned, or a run length.
+- **Offline progress:** up to 24 hours, simulated as up to 1,000 ticks so automation keeps working. A summary shows what happened.
+- **Saving:** localStorage every 10 seconds by default, plus on hide and close. Export and import use a base64 code. `state.js` migrates older saves and falls back to defaults for any broken field.
 
-### Signal log (story)
-- A short line of terminal-style text at key moments: first array, first Decode, and so on. This gives the game its deep-space feel without any art.
-- Kept in a scrollable log panel.
+## Balance notes
 
-### Statistics
-- Per layer: totals, best run, fastest run, number of resets.
-- Current run: time in run, photons this run.
+Lessons from tuning, for future changes:
 
-### Settings
-- Number notation: scientific (default), engineering, standard letters (K, M, B) and logarithm.
-- Autosave interval, offline progress on or off, confirmation prompts for each reset.
-- Keybinds: `G` gather, `1` to `8` buy an array, `M` buy max on all, `D` Decode.
+- **Avoid continuous feedback loops.** An early design paid out telemetry every second, and that telemetry raised its own payout. Photons hit 1.8e308 within minutes. Resets must stay discrete.
+- **The milestone interval is the strongest lever.** Going from every 20 owned to every 19 roughly halves a Horizon run, which is why Tidal Lock moves it one step per level.
+- **Wide Band is sensitive.** Adding 0.15 to the telemetry exponent gets the first Horizon in about 21 hours. Adding 0.1 stalls it past 250 hours.
+- **Past the Horizon, drag sets the wall.** Small changes to the drag exponent move where runs stall by hundreds of orders of magnitude.
 
-### Offline progress
-- Built for layer 1. As layers are added, offline time should simulate automation too (autobuyers, Auto-Decode), in chunks of up to 1,000 ticks, not one giant tick.
+Run `npm run simulate` after any balance change and compare with the pacing table above.
 
-## UI layout
+## Code structure
 
-Tabs along the top, each shown once it unlocks:
-
-1. **Arrays:** photons, gather, arrays, photon upgrades
-2. **Telemetry:** Decode button with gain preview, telemetry upgrades, milestones
-3. **Calibration:** array tuning, autobuyers
-4. **Horizon:** challenges, shard upgrades
-5. **Achievements**
-6. **Log**
-7. **Stats**
-8. **Settings** (includes save, export, import, reset)
-
-The photon count and photons/s stay pinned at the top of every tab.
-
-## Technical plan
-
-### Code structure
-
-`game.js` will be split as systems are added, using plain ES modules with no build step:
+Plain scripts loaded in order, so the game also runs from `file://`:
 
 ```
+index.html
 src/
-  main.js          boot, game loop, autosave
-  state.js         freshState, save/load, migrations
   format.js        number and time formatting, notations
-  layers/
-    photons.js     arrays, photon upgrades
-    telemetry.js   Decode, telemetry upgrades, milestones
-    calibration.js Recalibrate, tuning, autobuyers
-    horizon.js     crossing, challenges, shard upgrades
-  achievements.js
-  log.js
-  ui/              one file per tab
+  data.js          content: arrays, upgrades, milestones, challenges, balance constants
+  state.js         fresh state, save and load, migrations
+  achievements.js  achievement definitions
+  engine.js        formulas, purchases, resets, automation, ticks (no DOM)
+  ui.js            tabs, widgets, modals, toasts
+  main.js          boot, game loop, saving, offline progress, keys
+  style.css        small hand-written styles
+  tailwind.css     generated by npm run build:css
+vendor/            break_infinity.js (MIT)
+tools/simulate.js  balance simulator
 ```
-
-### Rules
-
-- **Production is one pure function.** It takes the state and returns photons/s, stacking every multiplier. The tick, offline progress and the UI all call it, so they always agree.
-- **Content is data.** Arrays, upgrades, achievements and challenges are plain objects in arrays, like `GENERATORS` today. Adding content should not need new logic.
-- **Save versioning.** `state.version` goes up with each change to the save shape, and `state.js` runs migrations in order so old saves keep working.
-- **Decimals everywhere.** Any value that can grow uses `Decimal`. Counts that stay small (owned arrays, achievement flags) can be plain numbers.
-
-## Build order
-
-| Phase | Scope | Status |
-|---|---|---|
-| 1 | Layer 1 core: gather, 5 arrays, bulk buy, milestones, save/load, offline, export/import | done |
-| 2 | Split code into modules, tabs, notation setting | next |
-| 3 | Arrays 6 to 8, photon upgrades | |
-| 4 | Telemetry layer: Decode, upgrades, milestones | |
-| 5 | Achievements, signal log, stats tab | |
-| 6 | Calibration layer: tuning, autobuyers, Auto-Decode | |
-| 7 | Balancing pass on layers 1 to 3, offline simulation of automation | |
-| 8 | Horizon layer and challenges | |
-| 9 | Keybinds, settings polish, mobile pass | |
