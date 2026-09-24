@@ -1,0 +1,68 @@
+body {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.glow-border {
+  border: 1px solid rgb(34 211 238 / 0.4);
+  box-shadow: 0 0 8px rgb(34 211 238 / 0.15);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.glow-border:hover:not(:disabled) {
+  border-color: rgb(34 211 238 / 0.8);
+  box-shadow: 0 0 12px rgb(34 211 238 / 0.35);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tab-btn {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: rgb(161 161 170);
+}
+.tab-btn.active {
+  color: rgb(34 211 238);
+  border-color: rgb(39 39 42);
+  background: rgb(24 24 27);
+}
+
+.buy-mode-btn { padding: 0.2rem 0.6rem; border: 1px solid rgb(63 63 70); }
+.buy-mode-btn.active { border-color: rgb(34 211 238); color: rgb(34 211 238); }
+
+.panel { display: none; }
+.panel.active { display: block; }
+
+.progress {
+  height: 4px;
+  background: rgb(39 39 42);
+  overflow: hidden;
+}
+.progress > div {
+  height: 100%;
+  background: rgb(34 211 238);
+  transition: width 0.1s linear;
+}
+
+.glow-violet { border-color: rgb(167 139 250 / 0.4); box-shadow: 0 0 8px rgb(167 139 250 / 0.15); }
+.glow-violet:hover:not(:disabled) { border-color: rgb(167 139 250 / 0.8); box-shadow: 0 0 12px rgb(167 139 250 / 0.35); }
+.glow-emerald { border-color: rgb(52 211 153 / 0.4); box-shadow: 0 0 8px rgb(52 211 153 / 0.15); }
+.glow-emerald:hover:not(:disabled) { border-color: rgb(52 211 153 / 0.8); box-shadow: 0 0 12px rgb(52 211 153 / 0.35); }
+
+.ping-btn:active:not(:disabled) { transform: scale(0.98); }
+button.owned { opacity: 0.6; border-color: rgb(63 63 70); box-shadow: none; }
+
+.thread-cell {
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgb(63 63 70);
+}
+.thread-cell.idle { background: rgb(63 63 70); }
+.thread-cell.active {
+  background: rgb(52 211 153);
+  border-color: rgb(52 211 153);
+  box-shadow: 0 0 6px rgb(52 211 153 / 0.6);
+}
+.progress > div.bar-emerald { background: rgb(52 211 153); transition: none; }
+.progress > div.bar-violet { background: rgb(167 139 250); }
