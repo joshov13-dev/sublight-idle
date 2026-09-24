@@ -307,6 +307,7 @@ function buildHeader() {
   const telemetry = chip('Telemetry', 'emerald');
   const calibration = chip('Calibration', 'amber');
   const shards = chip('Shards', 'violet');
+  const fragments = chip('Fragments', 'amber');
   const decodeBtn = h('button', { onclick: () => ui.decode() });
   const recalBtn = h('button', { onclick: () => ui.recalibrate() });
   const crossBtn = h('button', { onclick: () => ui.cross() });
@@ -322,23 +323,26 @@ function buildHeader() {
         h('div', { class: 'text-[10px] tracking-[0.35em] uppercase text-slate-500 mb-1', text: 'Sublight' }),
         photons, pps),
       h('div', { class: 'flex flex-col items-start sm:items-end gap-1' },
-        h('div', { class: 'flex flex-wrap gap-x-4 gap-y-1' }, telemetry.el, calibration.el, shards.el),
+        h('div', { class: 'flex flex-wrap gap-x-4 gap-y-1' }, telemetry.el, calibration.el, shards.el, fragments.el),
         h('div', { class: 'flex flex-wrap gap-2' }, decodeBtn, recalBtn, crossBtn))),
     challenge);
-  Object.assign(headerEls, { photons, pps, telemetry, calibration, shards, decodeBtn, recalBtn, crossBtn, challenge, challengeText });
+  Object.assign(headerEls, { photons, pps, telemetry, calibration, shards, fragments, decodeBtn, recalBtn, crossBtn, challenge, challengeText });
 }
 
 function updateHeader(prod) {
   const e = headerEls;
   setText(e.photons, format(state.photons));
   const capped = !isBroken() && canCross();
-  setText(e.pps, capped ? 'Photon limit reached. Cross the Horizon.' : `${format(prod.total)} photons / sec`);
+  const surging = state.signal.surge > 0 ? ` (Signal Surge x${surgeMultiplier()})` : '';
+  setText(e.pps, capped ? 'Photon limit reached. Cross the Horizon.' : `${format(prod.total)} photons / sec${surging}`);
   show(e.telemetry.el, Boolean(state.flags.telemetry));
   setText(e.telemetry.value, format(state.telemetry));
   show(e.calibration.el, Boolean(state.flags.calibration));
   setText(e.calibration.value, formatInt(state.calibration));
   show(e.shards.el, state.stats.crossings > 0 || state.shards.gt(0));
   setText(e.shards.value, format(state.shards));
+  show(e.fragments.el, state.signal.fragmentsEarned > 0);
+  setText(e.fragments.value, formatInt(state.signal.fragments));
 
   const pendingT = pendingTelemetry();
   show(e.decodeBtn, pendingT.gte(1));
@@ -364,6 +368,7 @@ function updateHeader(prod) {
 
 const TABS = [
   { id: 'arrays', label: 'Arrays', unlocked: () => true },
+  { id: 'signal', label: 'Signal', unlocked: () => true },
   { id: 'telemetry', label: 'Telemetry', unlocked: () => Boolean(state.flags.telemetry) },
   { id: 'calibration', label: 'Calibration', unlocked: () => Boolean(state.flags.calibration) },
   { id: 'horizon', label: 'Horizon', unlocked: () => Boolean(state.flags.horizon) },
@@ -403,7 +408,7 @@ function updateTabs() {
     const btn = tabEls[tab.id];
     const active = state.tab === tab.id;
     const unlocked = tab.unlocked();
-    setText(btn, unlocked ? tab.label : `${tab.label} (locked)`);
+    setText(btn, !unlocked ? `${tab.label} (locked)` : tab.id === 'signal' && state.signal.queued ? `Signal (${state.signal.queued})` : tab.label);
     btn.setAttribute('aria-selected', String(active));
     setClass(btn, `shrink-0 px-3 py-3 text-xs uppercase tracking-wider border-b-2 transition ${active ? 'border-sky-400 text-sky-100' : 'border-transparent hover:text-slate-200'} ${unlocked ? (active ? '' : 'text-slate-400') : 'text-slate-600'}`);
   }
@@ -416,7 +421,7 @@ function buildArraysTab() {
   const gatherBtn = h('button', {
     class: `${BTN} ${THEMES.sky.button} px-6 py-3`,
     text: 'Gather photons',
-    onclick: () => { gather(); refresh(); },
+    onclick: () => { gather(); burstFrom(gatherBtn, [125, 211, 252], 10); refresh(); },
   });
   const gatherInfo = h('div', { class: 'text-xs text-slate-500 tabular-nums' });
 
@@ -835,9 +840,172 @@ function buildHorizonTab() {
   };
 }
 
+// ---------- Signal tab ----------
+
+function drawWave(ctx, w, hgt, freq, phase, colour, noise, time, dashed) {
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = dashed ? 2 : 2.5;
+  ctx.setLineDash(dashed ? [6, 5] : []);
+  ctx.beginPath();
+  for (let x = 0; x <= w; x += 3) {
+    const t = x / w;
+    const wobble = noise ? Math.sin(t * 37 + time * 5) * noise * 0.5 + Math.sin(t * 91 - time * 7) * noise * 0.3 : 0;
+    const y = hgt / 2 - (Math.sin(t * freq * Math.PI * 2 + (phase * Math.PI) / 180) + wobble) * hgt * 0.36;
+    if (x === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function buildSignalTab() {
+  const status = h('div', { class: 'text-sm' });
+  const surge = h('div', { class: 'text-xs text-emerald-300' });
+  const canvas = h('canvas', { class: 'w-full h-40 rounded-md bg-slate-950/80 border border-slate-800', width: 720, height: 200, 'aria-label': 'Signal scope' });
+  const ctx = canvas.getContext('2d');
+  const freq = h('input', { type: 'range', min: '1', max: '6.5', step: '0.1', value: '3', class: 'w-full accent-amber-400', 'aria-label': 'Frequency' });
+  const phase = h('input', { type: 'range', min: '0', max: '359', step: '1', value: '0', class: 'w-full accent-amber-400', 'aria-label': 'Phase' });
+  const freqLabel = h('span', { class: 'tabular-nums text-amber-200' });
+  const phaseLabel = h('span', { class: 'tabular-nums text-amber-200' });
+  const strength = h('div', { class: 'text-xs text-slate-400 tabular-nums' });
+  const lockBar = h('div', { class: 'h-full bg-emerald-400 transition-[width] duration-100', style: 'width:0%' });
+  const tuner = h('div', { class: 'space-y-3' },
+    h('div', { class: 'grid grid-cols-1 sm:grid-cols-2 gap-4' },
+      h('label', { class: 'space-y-1 text-xs text-slate-400' }, h('div', {}, 'Frequency ', freqLabel), freq),
+      h('label', { class: 'space-y-1 text-xs text-slate-400' }, h('div', {}, 'Phase ', phaseLabel), phase)),
+    h('div', { class: 'flex items-center gap-3' },
+      h('div', { class: 'flex-1 h-2 rounded bg-slate-800 overflow-hidden' }, lockBar), strength));
+  const idle = h('p', { class: 'text-xs text-slate-500' });
+
+  const archive = h('ol', { class: 'space-y-2' });
+  let archiveKey = '';
+
+  const fragmentsLine = h('div', { class: 'text-sm' });
+  const cards = CONSTELLATIONS.map(c => {
+    const chart = h('canvas', { width: 220, height: 140, class: 'w-full h-28 rounded bg-slate-950/70' });
+    const btn = h('button', { onclick: () => { if (lightStar(c.id)) { burstFrom(chart, [253, 224, 71], 24); refresh(); } } });
+    const progress = h('span', { class: 'text-xs text-slate-500 tabular-nums' });
+    const el = h('div', { class: 'rounded-md border p-3 space-y-2' },
+      h('div', { class: 'flex items-center justify-between gap-2' }, h('div', { class: 'text-sm text-slate-100', text: c.name }), progress),
+      chart,
+      h('div', { class: 'text-xs text-amber-300/90', text: `Reward: ${c.reward}` }),
+      btn);
+    return { c, el, chart, btn, progress, ctx: chart.getContext('2d') };
+  });
+
+  const drawChart = card => {
+    const { ctx: g, c } = card;
+    const lit = state.signal.stars[c.id];
+    const done = lit >= c.stars.length;
+    g.clearRect(0, 0, 220, 140);
+    g.strokeStyle = done ? 'rgba(253,224,71,0.7)' : 'rgba(253,224,71,0.35)';
+    g.lineWidth = 1.5;
+    g.beginPath();
+    c.stars.slice(0, lit).forEach(([x, y], i) => (i ? g.lineTo(x * 200 + 10, y * 120 + 10) : g.moveTo(x * 200 + 10, y * 120 + 10)));
+    if (done) g.closePath();
+    g.stroke();
+    c.stars.forEach(([x, y], i) => {
+      const on = i < lit;
+      g.fillStyle = on ? '#fde68a' : 'rgba(148,163,184,0.35)';
+      g.beginPath();
+      g.arc(x * 200 + 10, y * 120 + 10, on ? 4 : 2.5, 0, Math.PI * 2);
+      g.fill();
+      if (on) {
+        g.fillStyle = 'rgba(253,224,71,0.18)';
+        g.beginPath();
+        g.arc(x * 200 + 10, y * 120 + 10, 10, 0, Math.PI * 2);
+        g.fill();
+      }
+    });
+  };
+
+  const el = h('div', { class: 'space-y-8' },
+    h('p', { class: 'text-sm text-slate-400', text: 'Something out there is transmitting. Tune the dials until your wave matches the signal and hold it there to lock on. Every lock reveals more of the message, pays out Star Fragments and triggers a Signal Surge.' }),
+    h('div', { class: PANEL + ' space-y-4' },
+      h('div', { class: 'flex flex-wrap items-center justify-between gap-2' }, status, surge),
+      canvas, tuner, idle),
+    section('Star chart', fragmentsLine, h('div', { class: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' }, cards.map(x => x.el))),
+    section('Transmissions', archive));
+
+  let last = performance.now();
+  return {
+    el,
+    update() {
+      const now = performance.now();
+      const dt = Math.min(0.25, (now - last) / 1000);
+      last = now;
+      const s = state.signal;
+      ensureTarget();
+      const waiting = s.queued > 0;
+      const cap = signalQueueCap();
+      const nextIn = s.queued >= cap ? 'Queue full.' : `Next in ${formatTime((s.decoded === 0 && s.queued === 0 ? SIGNAL.firstDelay : signalInterval()) - s.timer)}.`;
+      setText(status, `Transmissions waiting: ${s.queued} / ${cap}. ${nextIn}`);
+      setText(surge, s.surge > 0 ? `Signal Surge: all arrays x${surgeMultiplier()} for ${formatTime(s.surge)}` : '');
+
+      const W = 720; const H = 200;
+      ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = 'rgba(51,65,85,0.6)';
+      ctx.lineWidth = 1;
+      for (let y = 0; y <= H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      const time = now / 1000;
+      show(tuner, waiting);
+      show(idle, !waiting);
+      if (waiting) {
+        const f = Number(freq.value);
+        const p = Number(phase.value);
+        drawWave(ctx, W, H, s.target.freq, s.target.phase, 'rgba(52,211,153,0.9)', s.target.noise, time, true);
+        drawWave(ctx, W, H, f, p, 'rgba(251,191,36,0.95)', 0, time, false);
+        const score = tuneScore(f, p);
+        setText(freqLabel, f.toFixed(1));
+        setText(phaseLabel, `${p}°`);
+        setText(strength, `Signal strength ${(score * 100).toFixed(1)}%`);
+        const progress = updateLock(f, p, dt);
+        lockBar.style.width = `${Math.round(progress * 100)}%`;
+      } else {
+        ctx.strokeStyle = 'rgba(100,116,139,0.6)';
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 4) ctx.lineTo(x, H / 2 + (Math.random() - 0.5) * 18);
+        ctx.stroke();
+        setText(idle, 'Only static right now. Transmissions keep arriving while you are away, and up to ' + cap + ' can wait for you.');
+      }
+
+      setText(fragmentsLine, `Star Fragments: ${formatInt(s.fragments)}. Light every star in a constellation to claim its reward.`);
+      for (const card of cards) {
+        const lit = s.stars[card.c.id];
+        const done = lit >= card.c.stars.length;
+        const cost = starCost(card.c);
+        const can = !done && s.fragments >= cost;
+        setText(card.progress, `${lit}/${card.c.stars.length} stars`);
+        setText(card.btn, done ? 'Complete. Reward active.' : `Light a star: ${amountOf(cost, 'fragment')}`);
+        setClass(card.btn, `${SMALL_BTN} w-full ${can ? 'border-amber-600 text-amber-100 hover:bg-amber-900/40' : 'border-slate-800 text-slate-500'}`);
+        setDisabled(card.btn, !can);
+        setClass(card.el, `rounded-md border p-3 space-y-2 ${done ? 'border-amber-700/80 bg-amber-950/30' : 'border-slate-800 bg-slate-950/40'}`);
+        drawChart(card);
+      }
+
+      const next = nextTransmission();
+      const key = `${s.story}:${next && transmissionGated(next)}`;
+      if (key !== archiveKey) {
+        archiveKey = key;
+        const items = TRANSMISSIONS.slice(0, s.story).map((t, i) => h('li', { class: 'flex gap-3 text-sm' },
+          h('span', { class: 'shrink-0 w-12 text-xs text-slate-600 tabular-nums pt-0.5', text: `${i + 1}/${TRANSMISSIONS.length}` }),
+          h('span', { class: 'transmission text-emerald-200', text: t.text })));
+        if (next) {
+          items.push(h('li', { class: 'flex gap-3 text-sm' },
+            h('span', { class: 'shrink-0 w-12 text-xs text-slate-600 tabular-nums pt-0.5', text: `${s.story + 1}/${TRANSMISSIONS.length}` }),
+            h('span', { class: 'text-slate-500', text: transmissionGated(next) ? `Too much static. ${GATE_TEXT[next.gate]}` : 'Lock onto a signal to decode this.' })));
+        } else {
+          items.push(h('li', { class: 'text-sm text-slate-500', text: 'The message is complete. Signals still carry Star Fragments.' }));
+        }
+        archive.replaceChildren(...items);
+      }
+    },
+  };
+}
+
 // ---------- Achievements tab ----------
 
-const ACHIEVEMENT_ROWS = ['Photons', 'Telemetry', 'Calibration', 'Horizon', 'Beyond'];
+const ACHIEVEMENT_ROWS = ['Photons', 'Telemetry', 'Calibration', 'Horizon', 'Beyond', 'Signal'];
 
 function buildAchievementsTab() {
   const summary = h('p', { class: 'text-sm text-slate-400' });
@@ -925,6 +1093,10 @@ function buildStatsTab() {
         ['Fastest Horizon run', formatTime(s.fastestCross, true)],
         ['Current Horizon run', formatTime(state.horizonTime)],
         ['Challenges completed', `${challengeCount()} / ${CHALLENGES.length}`],
+        ['Transmissions locked', formatInt(state.signal.decoded)],
+        ['Story decoded', `${state.signal.story} / ${TRANSMISSIONS.length}`],
+        ['Star Fragments earned', formatInt(state.signal.fragmentsEarned)],
+        ['Comets caught', formatInt(state.signal.comets)],
         ['Achievements', `${state.achievements.length} / ${ACHIEVEMENTS.length}`],
         ['Production multiplier', `x${format(globalMultiplier())}`],
       ];
@@ -1118,6 +1290,7 @@ function buildUI() {
   const main = document.getElementById('main');
   const builders = {
     arrays: buildArraysTab,
+    signal: buildSignalTab,
     telemetry: buildTelemetryTab,
     calibration: buildCalibrationTab,
     horizon: buildHorizonTab,

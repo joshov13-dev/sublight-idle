@@ -7,7 +7,7 @@ const Decimal = require('../vendor/break_infinity.min.js');
 
 const SRC = path.join(__dirname, '..', 'src');
 const ctx = vm.createContext({ Decimal, console });
-for (const file of ['format.js', 'data.js', 'state.js', 'achievements.js', 'engine.js']) {
+for (const file of ['format.js', 'data.js', 'signal.js', 'state.js', 'achievements.js', 'engine.js']) {
   vm.runInContext(fs.readFileSync(path.join(SRC, file), 'utf8'), ctx, { filename: file });
 }
 const run = code => vm.runInContext(code, ctx);

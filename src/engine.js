@@ -12,6 +12,7 @@ const hooks = {
   log() {},
   achievement() {},
   lightspeed() {},
+  signal() {},
 };
 
 const hasPhoton = id => state.photonUpgrades.includes(id);
@@ -184,6 +185,7 @@ function globalMultiplier() {
   m = m.times(Decimal.pow(2, state.repeatables.amplifier));
   m = m.times(telemetryBonus());
   m = m.times(achievementMultiplier());
+  m = m.times(signalMultiplier());
   return m;
 }
 
@@ -222,7 +224,8 @@ function photonsPerSecond() {
 }
 
 function gatherAmount(pps = photonsPerSecond()) {
-  return hasPhoton('focus') ? pps.times(0.1).plus(3) : pps.times(BALANCE.gatherPct).plus(BALANCE.gatherBase);
+  const base = hasPhoton('focus') ? pps.times(0.1).plus(3) : pps.times(BALANCE.gatherPct).plus(BALANCE.gatherBase);
+  return constellationComplete('weaver') ? base.times(10) : base;
 }
 
 function earn(amount) {
@@ -352,6 +355,7 @@ function telemetryMultiplier() {
   m = m.times(Decimal.pow(1.25, state.repeatables.decoder));
   if (decodeMilestone(20)) m = m.times(2);
   if (hasHorizon('singularity')) m = m.times(state.shardsEarned.plus(1));
+  if (constellationComplete('archivist')) m = m.times(3);
   return m;
 }
 
@@ -388,7 +392,8 @@ function decode() {
 // ---------- Recalibrate (layer 3) ----------
 
 function calibrationMultiplier() {
-  return hasHorizon('singularity') ? state.shardsEarned.plus(1) : ONE;
+  const m = hasHorizon('singularity') ? state.shardsEarned.plus(1) : ONE;
+  return constellationComplete('pilot') ? m.times(2) : m;
 }
 
 function startingCalibration() {
@@ -609,6 +614,7 @@ function tick(dt) {
   if (hasTelemetry('echo')) gain = gain.plus(gatherAmount(pps).times(4 * dt));
   earn(gain);
   runAutomation(dt);
+  signalTick(dt);
   checkProgress();
 }
 

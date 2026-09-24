@@ -48,4 +48,13 @@ const ACHIEVEMENTS = [
   { id: 'dedicated', row: 5, name: 'Dedicated', desc: 'Play for 1 hour.', check: () => state.stats.timePlayed >= 3600 },
   { id: 'longhaul', row: 5, name: 'Long Haul', desc: 'Play for 3 days.', check: () => state.stats.timePlayed >= 3 * 86400 },
   { id: 'speedrun', row: 5, name: 'Speed of Light', desc: 'Finish a Horizon run in under 1 hour.', check: () => state.stats.fastestCross <= 3600 },
+
+  { id: 'firstcontact', row: 6, name: 'First Contact', desc: 'Lock onto a transmission.', check: () => state.signal.decoded > 0 },
+  { id: 'regular', row: 6, name: 'Regular Listener', desc: 'Lock onto 25 transmissions.', check: () => state.signal.decoded >= 25 },
+  { id: 'perfectlock', row: 6, name: 'Perfect Lock', desc: 'Lock a signal at 99.5% strength or better.', check: () => state.signal.perfect > 0 },
+  { id: 'wholestory', row: 6, name: 'The Whole Story', desc: 'Decode every transmission.', check: () => state.signal.story >= TRANSMISSIONS.length },
+  { id: 'firstconst', row: 6, name: 'Join the Dots', desc: 'Complete a constellation.', check: () => CONSTELLATIONS.some(c => constellationComplete(c.id)) },
+  { id: 'allconst', row: 6, name: 'Cartographer', desc: 'Complete every constellation.', check: () => CONSTELLATIONS.every(c => constellationComplete(c.id)) },
+  { id: 'comet', row: 6, name: 'Make a Wish', desc: 'Catch a comet.', check: () => state.signal.comets > 0 },
+  { id: 'comets', row: 6, name: 'Comet Chaser', desc: 'Catch 50 comets.', check: () => state.signal.comets >= 50 },
 ];

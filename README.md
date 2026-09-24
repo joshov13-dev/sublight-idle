@@ -13,6 +13,9 @@ Then go to http://localhost:8000. Everything the game needs is in the repo, so i
 
 ### How it goes
 
+**The Signal.** Something out there is transmitting. Tune the dials to lock onto each transmission, piece together a 24-part mystery, and spend the Star Fragments you earn to light up constellations. Catch comets as they streak past.
+
+
 1. **Photons.** Gather by hand, then build 8 kinds of array that gather for you.
 2. **Telemetry.** Produce 1e9 photons in one run to Decode: reset your run for telemetry, which boosts production and buys upgrades.
 3. **Calibration.** Earn 1e8 telemetry to Recalibrate for calibration points. Tune arrays with them, or buy upgrades such as Auto-Decode.

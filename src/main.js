@@ -109,6 +109,28 @@ function installHooks() {
   hooks.log = text => { if (!quiet) toast(text, 'log'); };
   hooks.achievement = a => { if (!quiet) toast(`Achievement unlocked: ${a.name}`, 'achievement'); };
   hooks.lightspeed = () => { endingPending = true; };
+  hooks.signal = ({ fragments, story, perfect }) => {
+    if (quiet) return;
+    const scope = document.querySelector('#panel-signal canvas');
+    if (scope) burstFrom(scope, [52, 211, 153], 50);
+    const reward = `+${fragments} Star Fragment${fragments === 1 ? '' : 's'}${perfect ? ' (perfect lock bonus)' : ''}. Signal Surge active.`;
+    if (!story) {
+      toast(`Signal locked. ${reward}`, 'log');
+      return;
+    }
+    const line = h('p', { class: 'transmission text-emerald-200 text-base leading-relaxed min-h-[3rem]' });
+    openModal({
+      title: `Transmission ${state.signal.story} of ${TRANSMISSIONS.length}`,
+      body: h('div', { class: 'space-y-3' }, line, h('p', { class: 'text-xs text-slate-400', text: reward })),
+      actions: [{ label: 'Keep listening', style: 'primary' }],
+    });
+    let i = 0;
+    const type = setInterval(() => {
+      i += 1;
+      line.textContent = story.slice(0, i);
+      if (i >= story.length) clearInterval(type);
+    }, 28);
+  };
   ui.save = manual => {
     const ok = saveGame();
     if (manual) toast(ok ? 'Game saved.' : 'Could not save. Your browser may be blocking storage.');
@@ -175,6 +197,7 @@ function boot() {
   setNotation(state.settings.notation);
   installHooks();
   buildUI();
+  initSky();
   if (result.fresh) addLog(SIGNAL_LINES.start);
   if (result.away > 10) catchUp(result.away);
   state.lastTick = Date.now();

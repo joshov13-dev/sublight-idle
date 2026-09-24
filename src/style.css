@@ -28,3 +28,45 @@ button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+#sky {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+#tabs, #main { position: relative; z-index: 1; }
+#tabs { background: rgba(2, 6, 23, 0.75); }
+
+.comet {
+  position: fixed;
+  z-index: 30;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, #fef9c3 0 18%, rgba(253, 224, 71, 0.55) 30%, rgba(253, 224, 71, 0) 68%);
+  animation: comet-fly var(--dur) linear forwards;
+}
+.comet::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 50%;
+  width: 120px;
+  height: 3px;
+  transform: translateY(-50%) scaleX(var(--tilt));
+  transform-origin: right center;
+  background: linear-gradient(to left, rgba(253, 224, 71, 0.7), rgba(253, 224, 71, 0));
+  border-radius: 9999px;
+}
+@keyframes comet-fly {
+  from { transform: translate(0, 0); }
+  to { transform: translate(var(--dx), 18vh); }
+}
+
+.transmission {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.45);
+}
